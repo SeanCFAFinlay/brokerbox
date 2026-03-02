@@ -1,0 +1,22 @@
+{
+    "name": "@brokerbox/db",
+    "version": "1.0.0",
+    "private": true,
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "scripts": {
+        "generate": "prisma generate",
+        "push": "prisma db push --accept-data-loss",
+        "seed": "tsx prisma/seed.ts",
+        "build": "tsc"
+    },
+    "dependencies": {
+        "@prisma/client": "^5.22.0"
+    },
+    "devDependencies": {
+        "@types/node": "^25.3.3",
+        "prisma": "^5.10.0",
+        "tsx": "^4.7.0",
+        "typescript": "^5.3.0"
+    }
+}
