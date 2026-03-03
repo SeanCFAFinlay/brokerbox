@@ -63,7 +63,7 @@ export default function DashboardScreen() {
       <View style={styles.sidebar}>
         <View style={styles.logoContainer}>
           <Image
-            source={require('../../../assets/images/react-logo.png')} // Fallback until strict logo path is defined
+            source={require('../../assets/images/icon.png')} // Fixed path and using existing icon.png
             style={styles.logoImage}
             resizeMode="contain"
           />

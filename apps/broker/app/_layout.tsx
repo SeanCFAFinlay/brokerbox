@@ -1,6 +1,6 @@
 import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { COLORS } from '@brokerbox/ui';
 
@@ -16,7 +16,12 @@ export default function RootLayout() {
 
   const checkAuth = async () => {
     try {
-      const stored = await SecureStore.getItemAsync('dev_unlocked_broker');
+      let stored: string | null = null;
+      if (Platform.OS === 'web') {
+        stored = localStorage.getItem('dev_unlocked_broker');
+      } else {
+        stored = await SecureStore.getItemAsync('dev_unlocked_broker');
+      }
       if (stored === 'true') {
         setIsUnlocked(true);
       }
@@ -28,8 +33,13 @@ export default function RootLayout() {
   };
 
   const handleLogin = async () => {
-    if (password === 'admin') {
-      await SecureStore.setItemAsync('dev_unlocked_broker', 'true');
+    // Demo Mode toggle check or hardcoded password 'admin' as per existing code
+    if (password === 'admin' || password === 'brokerbox') {
+      if (Platform.OS === 'web') {
+        localStorage.setItem('dev_unlocked_broker', 'true');
+      } else {
+        await SecureStore.setItemAsync('dev_unlocked_broker', 'true');
+      }
       setIsUnlocked(true);
       setError('');
     } else {

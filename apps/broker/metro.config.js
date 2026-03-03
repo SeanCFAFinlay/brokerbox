@@ -11,6 +11,7 @@ config.resolver.nodeModulesPaths = [
     path.resolve(projectRoot, 'node_modules'),
     path.resolve(workspaceRoot, 'node_modules'),
 ];
-config.resolver.disableHierarchicalLookup = true;
+// config.resolver.disableHierarchicalLookup = true; // Disabled for pnpm compatibility
+config.resolver.unstable_enablePackageExports = true;
 
 module.exports = config;
