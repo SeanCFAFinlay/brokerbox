@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { KpiCard, COLORS } from '@brokerbox/ui';
-import { Image } from 'react-native';
+import { Image, useWindowDimensions } from 'react-native';
 
 // Using local proxy until dynamic env resolution is in place
 const API_URL = 'http://localhost:4000/api';
@@ -49,6 +49,9 @@ export default function DashboardScreen() {
     return `$${val.toLocaleString()}`;
   };
 
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
+
   if (!data) {
     return (
       <View style={styles.container}>
@@ -59,20 +62,22 @@ export default function DashboardScreen() {
 
   return (
     <View style={styles.mainWrapper}>
-      {/* Sidebar Section */}
-      <View style={styles.sidebar}>
-        <View style={styles.logoContainer}>
-          <Image
-            source={require('../../assets/images/icon.png')} // Fixed path and using existing icon.png
-            style={styles.logoImage}
-            resizeMode="contain"
-          />
-          <View>
-            <Text style={styles.logoBrand}>Broker Box</Text>
-            <Text style={styles.logoCompany}>Technologies Inc.</Text>
+      {/* Sidebar Section - Hide on Mobile */}
+      {!isMobile && (
+        <View style={styles.sidebar}>
+          <View style={styles.logoContainer}>
+            <Image
+              source={require('../../assets/images/icon.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+            <View>
+              <Text style={styles.logoBrand}>Broker Box</Text>
+              <Text style={styles.logoCompany}>Technologies Inc.</Text>
+            </View>
           </View>
         </View>
-      </View>
+      )}
 
       {/* Main Content Area */}
       <ScrollView
@@ -162,8 +167,9 @@ const styles = StyleSheet.create({
   kpiGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: 14,
-    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    justifyContent: 'flex-start',
+    gap: 16,
   },
   section: {
     padding: 20,

@@ -28,18 +28,19 @@ export const KpiCard: React.FC<KpiCardProps> = ({ title, value, subtitle, trend 
 const styles = StyleSheet.create({
     card: {
         backgroundColor: COLORS.card,
-        borderRadius: 16,
+        borderRadius: 20,
         padding: 20,
         borderWidth: 1,
         borderColor: COLORS.border,
-        minWidth: 160,
+        flexGrow: 1,
+        minWidth: 300,
         marginBottom: 16,
         // Elevation for premium shadow
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 5,
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
+        elevation: 4,
     },
     label: {
         color: COLORS.muted,
