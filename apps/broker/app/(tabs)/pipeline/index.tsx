@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
-import { COLORS } from '@brokerbox/ui';
+import { COLORS, StatusPill } from '@brokerbox/ui';
 
 const STAGES = ['NEW', 'DOCS_REQUESTED', 'IN_REVIEW', 'SUBMITTED', 'COMMITTED', 'FUNDED', 'CLOSED', 'LOST'];
 const API_URL = 'http://localhost:4000/api';
@@ -57,7 +57,10 @@ export default function PipelineScreen() {
                                 <Text style={styles.dealAmount}>
                                     ${deal.loanAmount?.toLocaleString()}
                                 </Text>
-                                <Text style={styles.dealTitle} numberOfLines={1}>{deal.title}</Text>
+                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <Text style={[styles.dealTitle, { flex: 1, marginRight: 8 }]} numberOfLines={1}>{deal.title}</Text>
+                                    <StatusPill status={deal.stage} />
+                                </View>
                             </TouchableOpacity>
                         )
                     })}
@@ -127,11 +130,16 @@ const styles = StyleSheet.create({
     },
     dealCard: {
         backgroundColor: COLORS.card,
-        borderRadius: 12,
+        borderRadius: 16,
         padding: 16,
-        marginBottom: 12,
+        marginBottom: 16,
         borderWidth: 1,
-        borderColor: '#1f2937',
+        borderColor: COLORS.border,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 3,
     },
     dealName: {
         color: COLORS.text,

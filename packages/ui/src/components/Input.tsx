@@ -1,51 +1,48 @@
 import React from 'react';
-import { View, Text, TextInput, StyleSheet, TextInputProps } from 'react-native';
+import { TextInput, StyleSheet, View, Text } from 'react-native';
+
 import { COLORS } from '../index';
 
-export interface InputProps extends TextInputProps {
-    label: string;
-    error?: string;
+interface InputProps {
+    label?: string;
+    value: string;
+    onChangeText: (text: string) => void;
+    placeholder?: string;
+    secureTextEntry?: boolean;
 }
 
-export function Input({ label, error, ...props }: InputProps) {
-    return (
-        <View style={styles.container}>
-            <Text style={styles.label}>{label}</Text>
-            <TextInput
-                style={[styles.input, error && styles.inputError]}
-                placeholderTextColor={COLORS.muted}
-                {...props}
-            />
-            {error && <Text style={styles.errorText}>{error}</Text>}
-        </View>
-    );
-}
+export const Input: React.FC<InputProps> = ({ label, value, onChangeText, placeholder, secureTextEntry }) => (
+    <View style={styles.container}>
+        {label && <Text style={styles.label}>{label}</Text>}
+        <TextInput
+            style={styles.input}
+            value={value}
+            onChangeText={onChangeText}
+            placeholder={placeholder}
+            placeholderTextColor={COLORS.muted}
+            secureTextEntry={secureTextEntry}
+            autoCapitalize="none"
+        />
+    </View>
+);
 
 const styles = StyleSheet.create({
     container: {
-        marginBottom: 16,
+        marginBottom: 20,
     },
     label: {
-        color: COLORS.textSecondary,
+        color: COLORS.muted,
         fontSize: 14,
         marginBottom: 8,
-        fontWeight: '500',
+        fontWeight: '600',
     },
     input: {
-        backgroundColor: COLORS.bg,
-        borderWidth: 1,
-        borderColor: '#374151',
-        borderRadius: 8,
-        padding: 12,
+        backgroundColor: COLORS.card,
         color: COLORS.text,
+        padding: 16,
+        borderRadius: 12,
         fontSize: 16,
+        borderWidth: 1,
+        borderColor: COLORS.border,
     },
-    inputError: {
-        borderColor: COLORS.error,
-    },
-    errorText: {
-        color: COLORS.error,
-        fontSize: 12,
-        marginTop: 4,
-    }
 });
