@@ -1,5 +1,4 @@
 ﻿import { NextRequest, NextResponse } from 'next/server';
-import type { Lender } from '@prisma/client';
 import prisma from '@/lib/prisma';
 import { runMatch } from '@/lib/matchEngine';
 
@@ -42,7 +41,7 @@ export async function POST(req: NextRequest) {
             gds,
             tds,
         },
-        lenders.map((l: Lender) => ({
+        lenders.map((l: any) => ({
             id: l.id,
             name: l.name,
             minCreditScore: l.minCreditScore,
@@ -62,4 +61,5 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ borrower, deal, results });
 }
+
 
