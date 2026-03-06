@@ -7,7 +7,7 @@
                     "build":  "next build",
                     "start":  "next start",
                     "lint":  "eslint",
-                    "db:generate":  "npx prisma generate --schema=./prisma/schema.prisma",
+                    "db:generate":  "prisma generate --schema=./prisma/schema.prisma",
                     "db:migrate":  "npx prisma migrate dev --schema=./prisma/schema.prisma",
                     "db:seed":  "npx tsx prisma/seed.ts",
                     "db:push":  "npx prisma db push --schema=./prisma/schema.prisma"
