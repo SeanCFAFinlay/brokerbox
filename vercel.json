@@ -1,13 +1,7 @@
 {
     "version": 2,
-    "buildCommand": "pnpm -C apps/broker vercel-build",
-    "outputDirectory": "apps/broker/dist",
-    "framework": null,
-    "installCommand": "pnpm install",
-    "rewrites": [
-        {
-            "source": "/(.*)",
-            "destination": "/"
-        }
-    ]
+    "buildCommand": "pnpm -C apps/web build",
+    "outputDirectory": "apps/web/.next",
+    "framework": "nextjs",
+    "installCommand": "pnpm install"
 }
