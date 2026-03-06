@@ -1,0 +1,133 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  role      String   @default("demo")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // relations
+  borrowers Borrower[]
+  auditLogs AuditLog[]
+}
+
+model Borrower {
+  id               String   @id @default(cuid())
+  firstName        String
+  lastName         String
+  email            String   @unique
+  phone            String?
+  address          String?
+  city             String?
+  province         String?
+  postalCode       String?
+  income           Float?
+  employmentStatus String?
+  liabilities      Float?
+  creditScore      Int?
+  creditScoreDate  DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  // relations
+  deals            Deal[]
+  scenarios        Scenario[]
+  docRequests      DocRequest[]
+  auditLogs        AuditLog[]
+  userId           String
+  user             User     @relation(fields: [userId], references: [id])
+}
+
+model Lender {
+  id                String   @id @default(cuid())
+  name              String
+  minCreditScore    Int?
+  maxLTV            Float?
+  maxGDS            Float?
+  maxTDS            Float?
+  supportedProvinces String[]
+  propertyTypes     String[]
+  pricingPremium    Float?
+  documentRequirements String[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  deals             Deal[]
+  auditLogs         AuditLog[]
+}
+
+model Deal {
+  id                String   @id @default(cuid())
+  borrowerId        String
+  lenderId          String?
+  stage             String   @default("prospecting")
+  propertyAddress   String?
+  propertyValue     Float?
+  loanAmount        Float?
+  interestRate      Float?
+  termMonths        Int?
+  ltv               Float?
+  gds               Float?
+  tds               Float?
+  monthlyPayment    Float?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  // relations
+  borrower          Borrower @relation(fields: [borrowerId], references: [id])
+  lender            Lender?  @relation(fields: [lenderId], references: [id])
+  auditLogs         AuditLog[]
+}
+
+model Scenario {
+  id                String   @id @default(cuid())
+  borrowerId        String
+  name              String
+  type              String   // purchase, refi, etc.
+  inputs            Json
+  results           Json
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  borrower          Borrower @relation(fields: [borrowerId], references: [id])
+  auditLogs         AuditLog[]
+}
+
+model DocRequest {
+  id                String   @id @default(cuid())
+  borrowerId        String
+  dealId            String?
+  lenderId          String?
+  status            String   @default("requested")
+  requiredDocs      String[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  borrower          Borrower @relation(fields: [borrowerId], references: [id])
+  deal              Deal?    @relation(fields: [dealId], references: [id])
+  lender            Lender?  @relation(fields: [lenderId], references: [id])
+  documents         DocumentFile[]
+  auditLogs         AuditLog[]
+}
+
+model DocumentFile {
+  id                String   @id @default(cuid())
+  docRequestId      String
+  path              String
+  version           Int      @default(1)
+  uploadedAt        DateTime @default(now())
+  docRequest        DocRequest @relation(fields: [docRequestId], references: [id])
+}
+
+model AuditLog {
+  id                String   @id @default(cuid())
+  actor             String   // e.g., user email or "system"
+  entity            String   // model name
+  entityId          String   // id of the record
+  action            String   // CREATE, UPDATE, DELETE
+  diff              Json?
+  timestamp         DateTime @default(now())
+}

@@ -1,22 +1,18 @@
 {
-    "name": "@brokerbox/db",
-    "version": "1.0.0",
-    "private": true,
-    "main": "./dist/index.js",
-    "types": "./dist/index.d.ts",
-    "scripts": {
-        "generate": "prisma generate",
-        "push": "prisma db push --accept-data-loss",
-        "seed": "tsx prisma/seed.ts",
-        "build": "tsc"
-    },
-    "dependencies": {
-        "@prisma/client": "^5.22.0"
-    },
-    "devDependencies": {
-        "@types/node": "^25.3.3",
-        "prisma": "^5.10.0",
-        "tsx": "^4.7.0",
-        "typescript": "^5.3.0"
-    }
+  "name": "@brokerbox/db",
+  "version": "0.0.1",
+  "private": true,
+  "main": "index.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.0.0"
+  },
+  "devDependencies": {
+    "prisma": "^6.0.0"
+  }
 }

@@ -1,0 +1,123 @@
+import prisma from '@/lib/prisma';
+import Link from 'next/link';
+import s from '@/styles/shared.module.css';
+import { notFound } from 'next/navigation';
+
+export const dynamic = 'force-dynamic';
+
+export default async function BorrowerDetailPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
+    const borrower = await prisma.borrower.findUnique({
+        where: { id },
+        include: {
+            deals: { include: { lender: true }, orderBy: { updatedAt: 'desc' } },
+            scenarios: { orderBy: { createdAt: 'desc' } },
+            docRequests: { include: { files: true }, orderBy: { createdAt: 'desc' } },
+        },
+    });
+
+    if (!borrower) return notFound();
+
+    return (
+        <>
+            <div className={s.pageHeader}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                        <p style={{ fontSize: 13, color: 'var(--bb-muted)', marginBottom: 4 }}><Link href="/borrowers" style={{ color: 'var(--bb-accent)' }}>Borrowers</Link> / {borrower.firstName} {borrower.lastName}</p>
+                        <h1>{borrower.firstName} {borrower.lastName}</h1>
+                    </div>
+                    <span className={`${s.pill} ${borrower.status === 'active' ? s.pillGreen : s.pillGray}`}>{borrower.status}</span>
+                </div>
+            </div>
+
+            {/* Profile summary */}
+            <div className={s.kpiRow} style={{ marginBottom: 24 }}>
+                <div className={s.kpiCard}><div className={s.kpiLabel}>Credit Score</div><div className={s.kpiValue}>{borrower.creditScore}</div></div>
+                <div className={s.kpiCard}><div className={s.kpiLabel}>Annual Income</div><div className={s.kpiValue}>${borrower.income.toLocaleString()}</div></div>
+                <div className={s.kpiCard}><div className={s.kpiLabel}>Province</div><div className={s.kpiValue}>{borrower.province}</div></div>
+                <div className={s.kpiCard}><div className={s.kpiLabel}>Employment</div><div className={s.kpiValue} style={{ fontSize: 18 }}>{borrower.employmentStatus}</div></div>
+                <div className={s.kpiCard}><div className={s.kpiLabel}>Active Deals</div><div className={s.kpiValue}>{borrower.deals.length}</div></div>
+            </div>
+
+            <div className={s.grid2}>
+                {/* Contact Info */}
+                <div className={s.card}>
+                    <div className={s.cardTitle}>Contact Information</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 14 }}>
+                        <div><strong>Email:</strong> {borrower.email}</div>
+                        <div><strong>Phone:</strong> {borrower.phone || '—'}</div>
+                        <div><strong>Address:</strong> {borrower.address || '—'}, {borrower.city || ''} {borrower.province} {borrower.postalCode || ''}</div>
+                        <div><strong>Liabilities:</strong> ${borrower.liabilities.toLocaleString()}</div>
+                    </div>
+                </div>
+
+                {/* Doc Checklist */}
+                <div className={s.card}>
+                    <div className={s.cardTitle}>Document Checklist</div>
+                    {borrower.docRequests.length === 0 ? (
+                        <div className={s.emptyState}>No document requests yet.</div>
+                    ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            {borrower.docRequests.map(dr => {
+                                const statusColor = dr.status === 'verified' ? s.pillGreen : dr.status === 'uploaded' ? s.pillBlue : dr.status === 'rejected' ? s.pillRed : s.pillYellow;
+                                return (
+                                    <div key={dr.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
+                                        <span>{dr.docType}</span>
+                                        <span className={`${s.pill} ${statusColor}`}>{dr.status}</span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Deals Table */}
+            <div className={s.card} style={{ marginTop: 24 }}>
+                <div className={s.cardTitle}>Deals</div>
+                {borrower.deals.length === 0 ? (
+                    <div className={s.emptyState}>No deals yet.</div>
+                ) : (
+                    <table className={s.table}>
+                        <thead><tr><th>Property</th><th>Loan</th><th>LTV</th><th>Stage</th><th>Lender</th></tr></thead>
+                        <tbody>
+                            {borrower.deals.map(d => (
+                                <tr key={d.id}>
+                                    <td>{d.propertyAddress || '—'}</td>
+                                    <td>${d.loanAmount.toLocaleString()}</td>
+                                    <td>{d.ltv ? `${d.ltv.toFixed(1)}%` : '—'}</td>
+                                    <td><span className={`${s.pill} ${d.stage === 'funded' ? s.pillGreen : d.stage === 'approved' ? s.pillBlue : s.pillGray}`}>{d.stage}</span></td>
+                                    <td>{d.lender?.name || '—'}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
+            </div>
+
+            {/* Scenarios */}
+            {borrower.scenarios.length > 0 && (
+                <div className={s.card} style={{ marginTop: 24 }}>
+                    <div className={s.cardTitle}>Saved Scenarios</div>
+                    <table className={s.table}>
+                        <thead><tr><th>Name</th><th>Type</th><th>Loan</th><th>Payment</th><th>Created</th></tr></thead>
+                        <tbody>
+                            {borrower.scenarios.map(sc => {
+                                const r = sc.results as Record<string, number>;
+                                return (
+                                    <tr key={sc.id}>
+                                        <td>{sc.name}</td>
+                                        <td><span className={`${s.pill} ${s.pillBlue}`}>{sc.type}</span></td>
+                                        <td>${(r.loanAmount || 0).toLocaleString()}</td>
+                                        <td>${(r.monthlyPayment || 0).toLocaleString()}</td>
+                                        <td style={{ fontSize: 12, color: 'var(--bb-muted)' }}>{new Date(sc.createdAt).toLocaleDateString()}</td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+        </>
+    );
+}

@@ -1,0 +1,29 @@
+:root {
+  /* Light theme variables */
+  --color-bg: #f5f7fa;
+  --color-surface: #ffffff;
+  --color-text: #1a202c;
+  --color-muted: #718096;
+  --color-accent: #00bfa5; /* teal */
+  --color-success: #38a169;
+  --color-warning: #d69e2e;
+  --color-danger: #e53e3e;
+}
+
+html.theme-dark {
+  --color-bg: #121212;
+  --color-surface: #1e1e1e;
+  --color-text: #e0e0e0;
+  --color-muted: #a0a0a0;
+  --color-accent: #00bfa5; /* same teal */
+  --color-success: #38a169;
+  --color-warning: #d69e2e;
+  --color-danger: #e53e3e;
+}
+
+/* Utility classes */
+.body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+

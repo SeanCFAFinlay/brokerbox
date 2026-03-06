@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
-import { COLORS } from '../index';
+import { COLORS } from '../constants';
 
 interface StatusPillProps {
     status: string;

@@ -7,384 +7,89 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ------------------------------------------------------
-// USERS & CLIENTS
-// ------------------------------------------------------
-
-model UserProfile {
+model User {
   id        String   @id @default(cuid())
-  clerkId   String?  @unique // For future auth
   email     String   @unique
-  role      Role     @default(BROKER)
-  firstName String
-  lastName  String
+  password  String
+  role      Role
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  tasks     Task[]   @relation("TaskAssignee")
-  notes     Note[]   @relation("NoteAuthor")
-  messages  Message[] @relation("MessageSender")
-  notifications Notification[] @relation("NotificationRecipient")
+  deals     Deal[]
+}
+
+model Client {
+  id        String     @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  createdAt DateTime   @default(now())
+  deals     Deal[]
+  documents Document[]
+}
+
+model Lender {
+  id        String   @id @default(cuid())
+  name      String
+  criteria  String?
+  createdAt DateTime @default(now())
+  deals     Deal[]
+}
+
+model Deal {
+  id         String      @id @default(cuid())
+  clientId   String
+  lenderId   String?
+  brokerId   String
+  status     DealStatus  @default(NEW)
+  amount     Float       @default(0)
+  createdAt  DateTime    @default(now())
+
+  client     Client      @relation(fields: [clientId], references: [id])
+  lender     Lender?     @relation(fields: [lenderId], references: [id])
+  broker     User        @relation(fields: [brokerId], references: [id])
+
+  tasks      Task[]
+  notes      Note[]
+}
+
+model Task {
+  id        String   @id @default(cuid())
+  dealId    String
+  title     String
+  done      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  deal      Deal     @relation(fields: [dealId], references: [id])
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  dealId    String
+  body      String
+  createdAt DateTime @default(now())
+
+  deal      Deal     @relation(fields: [dealId], references: [id])
+}
+
+model Document {
+  id        String   @id @default(cuid())
+  clientId  String
+  fileUrl   String
+  type      String
+  createdAt DateTime @default(now())
+
+  client    Client   @relation(fields: [clientId], references: [id])
 }
 
 enum Role {
   BROKER
   CLIENT
   LENDER
-  ADMIN
 }
 
-model Client {
-  id            String   @id @default(cuid())
-  firstName     String
-  lastName      String
-  email         String   @unique
-  phone         String?
-  creditScore   Int?
-  monthlyIncome Float?
-  kycStatus     KycStatus @default(PENDING)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  contacts      ClientContact[]
-  deals         DealParty[]
-  properties    Property[]
-}
-
-enum KycStatus {
-  PENDING
-  APPROVED
-  REJECTED
-}
-
-model ClientContact {
-  id        String   @id @default(cuid())
-  clientId  String
-  type      String   // e.g., "SPOUSE", "GUARANTOR"
-  firstName String
-  lastName  String
-  email     String?
-  phone     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
-}
-
-// ------------------------------------------------------
-// PROPERTIES & DEALS
-// ------------------------------------------------------
-
-model Property {
-  id            String   @id @default(cuid())
-  clientId      String
-  address       String
-  city          String
-  province      String
-  postalCode    String
-  propertyType  String   // e.g., "DETACHED", "CONDO"
-  value         Float?
-  purchasePrice Float?
-  isOwnerOccupied Boolean @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  client        Client   @relation(fields: [clientId], references: [id])
-  deals         Deal[]
-}
-
-model Deal {
-  id          String   @id @default(cuid())
-  propertyId  String?
-  title       String
-  stage       DealStage @default(NEW)
-  loanAmount  Float?
-  targetClose Date?
-  
-  // Ontario FSRA Compliance Tracking
-  isForm1Signed   Boolean @default(false) // Investor/Lender Disclosure
-  isForm10Signed  Boolean @default(false) // Conflict of Interest
-  isForm215Signed Boolean @default(false) // Borrower Disclosure
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  property    Property? @relation(fields: [propertyId], references: [id])
-  parties     DealParty[]
-  documents   Document[]
-  docRequests DocumentRequest[]
-  notes       Note[]
-  tasks       Task[]
-  matches     DealLenderMatch[]
-  scenarios   Scenario[]
-  calcRuns    CalculatorRun[]
-  history     DealStageHistory[]
-  messageThreads MessageThread[]
-  activity    ActivityFeed[]
-}
-
-enum DealStage {
+enum DealStatus {
   NEW
-  DOCS_REQUESTED
-  IN_REVIEW
   SUBMITTED
-  COMMITTED
+  APPROVED
   FUNDED
-  LOST
-}
-
-model DealParty {
-  id       String @id @default(cuid())
-  dealId   String
-  clientId String
-  role     String // e.g., "PRIMARY_BORROWER", "CO_BORROWER"
-
-  deal     Deal   @relation(fields: [dealId], references: [id], onDelete: Cascade)
-  client   Client @relation(fields: [clientId], references: [id])
-
-  @@unique([dealId, clientId])
-}
-
-model DealStageHistory {
-  id        String   @id @default(cuid())
-  dealId    String
-  oldStage  String?
-  newStage  String
-  createdAt DateTime @default(now())
-
-  deal      Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
-}
-
-// ------------------------------------------------------
-// DOCUMENTS 
-// ------------------------------------------------------
-
-model Document {
-  id            String   @id @default(cuid())
-  dealId        String
-  name          String
-  type          String   // e.g., "PAY_STUB", "APPRAISAL"
-  storagePath   String
-  metadataJson  String?  // Store S3 or R2 metadata
-  sizeBytes     Int?
-  uploadedAt    DateTime @default(now())
-
-  deal          Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
-}
-
-model DocumentRequest {
-  id            String   @id @default(cuid())
-  dealId        String
-  name          String
-  description   String?
-  isRequired    Boolean  @default(true)
-  status        String   @default("PENDING") // PENDING, UPLOADED, APPROVED
-  dueDate       DateTime?
-  createdAt     DateTime @default(now())
-
-  deal          Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
-}
-
-// ------------------------------------------------------
-// LENDERS & MATCHING
-// ------------------------------------------------------
-
-model Lender {
-  id        String   @id @default(cuid())
-  name      String
-  type      LenderType
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  products      LenderProduct[]
-  criteria      LenderCriteriaRule[]
-  rateSheets    RateSheet[]
-  capacities    LenderCapacity[]
-  dealMatches   DealLenderMatch[]
-}
-
-enum LenderType {
-  PRIME
-  A_LENDER
-  B_LENDER
-  PRIVATE
-  MIC
-}
-
-model LenderCapacity {
-  id             String   @id @default(cuid())
-  lenderId       String
-  totalCapacity  Float
-  usedCapacity   Float    @default(0)
-  month          DateTime // e.g., 2023-10-01
-  createdAt      DateTime @default(now())
-
-  lender         Lender   @relation(fields: [lenderId], references: [id], onDelete: Cascade)
-}
-
-model LenderProduct {
-  id          String   @id @default(cuid())
-  lenderId    String
-  name        String
-  position    Int      // 1st, 2nd, 3rd mortgage
-  termMonths  Int?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-
-  lender      Lender   @relation(fields: [lenderId], references: [id], onDelete: Cascade)
-}
-
-model LenderCriteriaRule {
-  id          String   @id @default(cuid())
-  lenderId    String
-  version     Int      @default(1)
-  rulesJson   String   // Complex logic payload
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-
-  lender      Lender   @relation(fields: [lenderId], references: [id], onDelete: Cascade)
-}
-
-model RateSheet {
-  id          String   @id @default(cuid())
-  lenderId    String
-  ratesJson   String   // Matrix of rates by product/term
-  effectiveAt DateTime @default(now())
-  expiresAt   DateTime?
-
-  lender      Lender   @relation(fields: [lenderId], references: [id], onDelete: Cascade)
-}
-
-model DealLenderMatch {
-  id             String   @id @default(cuid())
-  dealId         String
-  lenderId       String
-  isEligible     Boolean
-  reasonsJson    String?  // Array of reason codes for pass/fail
-  matchScore     Float?
-  createdAt      DateTime @default(now())
-
-  deal           Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
-  lender         Lender   @relation(fields: [lenderId], references: [id], onDelete: Cascade)
-}
-
-// ------------------------------------------------------
-// SCENARIOS & CALCULATORS
-// ------------------------------------------------------
-
-model Scenario {
-  id             String   @id @default(cuid())
-  dealId         String
-  name           String
-  isRecommended  Boolean  @default(false)
-  totalAmount    Float
-  blendedRate    Float?
-  monthlyPayment Float?
-  gdsResult      Float?
-  tdsResult      Float?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  deal           Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
-  tranches       ScenarioTranche[]
-}
-
-model ScenarioTranche {
-  id                String   @id @default(cuid())
-  scenarioId        String
-  position          Int      // 1=1st, 2=2nd, 3=3rd
-  amount            Float
-  rate              Float
-  amortizationYears Float
-  lenderFeePercent  Float    @default(0)
-  brokerFeePercent  Float    @default(0)
-
-  scenario          Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
-}
-
-model CalculatorRun {
-  id          String   @id @default(cuid())
-  dealId      String?
-  inputsJson  String
-  outputsJson String
-  createdAt   DateTime @default(now())
-
-  deal        Deal?    @relation(fields: [dealId], references: [id], onDelete: SetNull)
-}
-
-// ------------------------------------------------------
-// WORKFLOW, COMMS, & AUDIT
-// ------------------------------------------------------
-
-model Task {
-  id          String   @id @default(cuid())
-  dealId      String?
-  assigneeId  String?
-  title       String
-  description String?
-  dueDate     DateTime?
-  isCompleted Boolean  @default(false)
-  createdAt   DateTime @default(now())
-
-  deal        Deal?    @relation(fields: [dealId], references: [id], onDelete: Cascade)
-  assignee    UserProfile? @relation("TaskAssignee", fields: [assigneeId], references: [id])
-}
-
-model Note {
-  id          String   @id @default(cuid())
-  dealId      String
-  authorId    String?
-  content     String
-  isPinned    Boolean  @default(false)
-  createdAt   DateTime @default(now())
-
-  deal        Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
-  author      UserProfile? @relation("NoteAuthor", fields: [authorId], references: [id])
-}
-
-model ActivityFeed {
-  id          String   @id @default(cuid())
-  dealId      String?
-  type        String   // e.g., "STAGE_CHANGE", "DOC_UPLOADED", "MATCH_RUN"
-  title       String
-  description String?
-  metadataJson String?
-  createdAt   DateTime @default(now())
-
-  deal        Deal?    @relation(fields: [dealId], references: [id], onDelete: Cascade)
-}
-
-model MessageThread {
-  id          String   @id @default(cuid())
-  dealId      String?
-  topic       String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  deal        Deal?    @relation(fields: [dealId], references: [id], onDelete: Cascade)
-  messages    Message[]
-}
-
-model Message {
-  id          String   @id @default(cuid())
-  threadId    String
-  senderId    String   // Foreign key to UserProfile OR Client string
-  content     String
-  createdAt   DateTime @default(now())
-
-  thread      MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
-  senderUser  UserProfile? @relation("MessageSender", fields: [senderId], references: [id], map: "Message_UserSender")
-  // Client senders handled carefully due to separate auth mechanisms in future.
-}
-
-model Notification {
-  id          String   @id @default(cuid())
-  recipientId String   // UserProfile ID
-  title       String
-  body        String
-  isRead      Boolean  @default(false)
-  actionUrl   String?
-  createdAt   DateTime @default(now())
-
-  recipient   UserProfile @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  DECLINED
 }

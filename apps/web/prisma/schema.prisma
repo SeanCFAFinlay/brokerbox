@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String   @default("Demo Broker")
+  role      String   @default("broker")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Borrower {
+  id               String    @id @default(cuid())
+  firstName        String
+  lastName         String
+  email            String    @unique
+  phone            String?
+  address          String?
+  city             String?
+  province         String    @default("ON")
+  postalCode       String?
+  income           Float     @default(0)
+  employmentStatus String    @default("employed")
+  liabilities      Float     @default(0)
+  creditScore      Int       @default(650)
+  creditScoreDate  DateTime?
+  status           String    @default("active")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deals            Deal[]
+  scenarios        Scenario[]
+  docRequests      DocRequest[]
+}
+
+model Lender {
+  id                   String   @id @default(cuid())
+  name                 String
+  contactEmail         String?
+  contactPhone         String?
+  minCreditScore       Int      @default(600)
+  maxLTV               Float    @default(80)
+  maxGDS               Float    @default(39)
+  maxTDS               Float    @default(44)
+  supportedProvinces   String[] @default(["ON"])
+  propertyTypes        String[] @default(["residential"])
+  pricingPremium       Float    @default(0)
+  baseRate             Float    @default(5.5)
+  speed                Int      @default(5)
+  exceptionsTolerance  Int      @default(3)
+  appetite             Int      @default(5)
+  documentRequirements String[] @default([])
+  status               String   @default("active")
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  deals                Deal[]
+}
+
+model Deal {
+  id              String    @id @default(cuid())
+  borrowerId      String
+  lenderId        String?
+  stage           String    @default("intake")
+  propertyAddress String?
+  propertyType    String    @default("residential")
+  propertyValue   Float     @default(0)
+  loanAmount      Float     @default(0)
+  interestRate    Float?
+  termMonths      Int       @default(300)
+  amortMonths     Int       @default(300)
+  ltv             Float?
+  gds             Float?
+  tds             Float?
+  monthlyPayment  Float?
+  matchScore      Int?
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  borrower        Borrower  @relation(fields: [borrowerId], references: [id], onDelete: Cascade)
+  lender          Lender?   @relation(fields: [lenderId], references: [id])
+  docRequests     DocRequest[]
+}
+
+model Scenario {
+  id         String   @id @default(cuid())
+  borrowerId String
+  name       String
+  type       String   @default("purchase")
+  inputs     Json     @default("{}")
+  results    Json     @default("{}")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  borrower   Borrower @relation(fields: [borrowerId], references: [id], onDelete: Cascade)
+}
+
+model DocRequest {
+  id           String         @id @default(cuid())
+  borrowerId   String
+  dealId       String?
+  docType      String
+  status       String         @default("requested")
+  notes        String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  borrower     Borrower       @relation(fields: [borrowerId], references: [id], onDelete: Cascade)
+  deal         Deal?          @relation(fields: [dealId], references: [id])
+  files        DocumentFile[]
+}
+
+model DocumentFile {
+  id           String     @id @default(cuid())
+  docRequestId String
+  filename     String
+  path         String
+  version      Int        @default(1)
+  uploadedAt   DateTime   @default(now())
+  docRequest   DocRequest @relation(fields: [docRequestId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actor     String   @default("demo")
+  entity    String
+  entityId  String
+  action    String
+  diff      Json?
+  timestamp DateTime @default(now())
+}
