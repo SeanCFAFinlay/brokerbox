@@ -1,27 +1,20 @@
 {
-  "name": "brokerbox",
-  "private": true,
-  "packageManager": "pnpm@9.15.4",
-  "scripts": {
-    "dev": "turbo run dev",
-    "build": "turbo run build",
-    "lint": "turbo run lint",
-    "typecheck": "turbo run typecheck",
-    "db:generate": "pnpm -C packages/db prisma:generate",
-    "db:migrate": "pnpm -C packages/db prisma:migrate",
-    "db:push": "pnpm -C packages/db prisma db push",
-    "db:seed": "pnpm -C packages/db seed",
-    "api:dev": "pnpm -C packages/api dev",
-    "api:build": "pnpm -C packages/api build"
-  },
-  "pnpm": {
-    "overrides": {
-      "prisma": "7.4.2",
-      "@prisma/client": "7.4.2",
-      "@prisma/engines": "7.4.2"
-    }
-  },
-  "devDependencies": {
-    "@expo/cli": "^55.0.14"
-  }
+    "name":  "brokerbox",
+    "private":  true,
+    "packageManager":  "pnpm@9.15.4",
+    "scripts":  {
+                    "dev":  "turbo run dev",
+                    "build":  "turbo run build",
+                    "lint":  "turbo run lint",
+                    "typecheck":  "turbo run typecheck",
+                    "db:generate":  "pnpm -C apps/web db:generate",
+                    "db:migrate":  "pnpm -C apps/web db:migrate",
+                    "db:push":  "pnpm -C apps/web db:push",
+                    "db:seed":  "pnpm -C apps/web db:seed",
+                    "api:dev":  "pnpm -C packages/api dev",
+                    "api:build":  "pnpm -C packages/api build"
+                },
+    "devDependencies":  {
+                            "@expo/cli":  "^55.0.14"
+                        }
 }
