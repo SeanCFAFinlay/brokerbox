@@ -28,3 +28,10 @@ build/
 *.tsbuildinfo
 .vercel
 .env*.local
+_doctor-build.log
+_doctor-install.log
+next-build.txt
+ts-errors.txt
+build-error.log
+*.bak
+*.bak.*
