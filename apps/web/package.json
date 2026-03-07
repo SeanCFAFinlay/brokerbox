@@ -4,7 +4,7 @@
     "private":  true,
     "scripts":  {
                     "dev":  "next dev",
-                    "build":  "next build --webpack",
+                    "build":  "pnpm exec prisma generate --schema=./prisma/schema.prisma \u0026\u0026 next build --webpack",
                     "start":  "next start",
                     "lint":  "eslint",
                     "db:generate":  "prisma generate --schema=./prisma/schema.prisma",
