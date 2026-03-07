@@ -3,7 +3,8 @@ import { useState, useEffect } from 'react';
 import s from '@/styles/shared.module.css';
 
 interface Borrower { id: string; firstName: string; lastName: string; }
-interface Scenario { id: string; name: string; type: string; inputs: Record<string, number>; results: Record<string, number>; createdAt: string; }
+interface Deal { id: string; propertyAddress: string; loanAmount: number; stage: string; }
+interface Scenario { id: string; name: string; type: string; inputs: Record<string, number>; results: Record<string, number>; isPreferred: boolean; recommendationNotes: string; createdAt: string; deal?: { propertyAddress: string }; }
 
 const TEMPLATES: Record<string, Record<string, number>> = {
     purchase: { propertyValue: 500000, downPayment: 100000, interestRate: 5.5, amortYears: 25, annualIncome: 100000, monthlyDebts: 500, propertyTax: 300, heating: 150 },
@@ -35,17 +36,28 @@ function compute(type: string, inputs: Record<string, number>) {
 export default function ScenarioBuilderPage() {
     const [borrowers, setBorrowers] = useState<Borrower[]>([]);
     const [selectedBorrower, setSelectedBorrower] = useState('');
+    const [borrowerDeals, setBorrowerDeals] = useState<Deal[]>([]);
+    const [selectedDeal, setSelectedDeal] = useState('');
+
     const [type, setType] = useState('purchase');
     const [inputs, setInputs] = useState(TEMPLATES.purchase);
     const [results, setResults] = useState<ReturnType<typeof compute> | null>(null);
     const [saved, setSaved] = useState<Scenario[]>([]);
     const [toast, setToast] = useState('');
     const [comparing, setComparing] = useState<string[]>([]);
+    const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+    const [editNoteText, setEditNoteText] = useState('');
 
     useEffect(() => { fetch('/api/borrowers').then(r => r.json()).then(setBorrowers); }, []);
 
     useEffect(() => {
-        if (selectedBorrower) fetch(`/api/scenarios?borrowerId=${selectedBorrower}`).then(r => r.json()).then(setSaved);
+        if (selectedBorrower) {
+            fetch(`/api/scenarios?borrowerId=${selectedBorrower}`).then(r => r.json()).then(setSaved);
+            fetch(`/api/borrowers/${selectedBorrower}`).then(r => r.json()).then(data => {
+                setBorrowerDeals(data.deals || []);
+                setSelectedDeal('');
+            });
+        }
     }, [selectedBorrower]);
 
     function handleTypeChange(t: string) {
@@ -60,15 +72,41 @@ export default function ScenarioBuilderPage() {
 
     async function handleSave() {
         if (!selectedBorrower || !results) return;
+        const payload: any = { borrowerId: selectedBorrower, name: `${type} scenario`, type, inputs, results };
+        if (selectedDeal) payload.dealId = selectedDeal;
+
         const res = await fetch('/api/scenarios', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ borrowerId: selectedBorrower, name: `${type} scenario`, type, inputs, results }),
+            body: JSON.stringify(payload),
         });
         if (res.ok) {
             setToast('Scenario saved!');
             setTimeout(() => setToast(''), 3000);
             fetch(`/api/scenarios?borrowerId=${selectedBorrower}`).then(r => r.json()).then(setSaved);
+        }
+    }
+
+    async function togglePreferred(id: string, currentVal: boolean) {
+        const res = await fetch(`/api/scenarios/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ isPreferred: !currentVal }),
+        });
+        if (res.ok) {
+            setSaved(prev => prev.map(s => s.id === id ? { ...s, isPreferred: !currentVal } : s));
+        }
+    }
+
+    async function saveNote(id: string) {
+        const res = await fetch(`/api/scenarios/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ recommendationNotes: editNoteText }),
+        });
+        if (res.ok) {
+            setSaved(prev => prev.map(s => s.id === id ? { ...s, recommendationNotes: editNoteText } : s));
+            setEditingNoteId(null);
         }
     }
 
@@ -82,7 +120,7 @@ export default function ScenarioBuilderPage() {
         <>
             <div className={s.pageHeader}>
                 <h1>🧮 Scenario Builder</h1>
-                <p>Model different mortgage scenarios and compare outcomes</p>
+                <p>Model different mortgage scenarios and compare outcomes for borrowers and deals</p>
             </div>
 
             <div className={s.grid2}>
@@ -90,13 +128,22 @@ export default function ScenarioBuilderPage() {
                 <div className={s.card}>
                     <div className={s.cardTitle}>Build Scenario</div>
                     <div className={s.formGroup}>
-                        <label className={s.formLabel}>Borrower</label>
+                        <label className={s.formLabel}>Link to Borrower</label>
                         <select className={s.formInput} value={selectedBorrower} onChange={e => setSelectedBorrower(e.target.value)}>
-                            <option value="">Select...</option>
+                            <option value="">Select a Borrower...</option>
                             {borrowers.map(b => <option key={b.id} value={b.id}>{b.firstName} {b.lastName}</option>)}
                         </select>
                     </div>
-                    <div className={s.tabs}>
+                    {borrowerDeals.length > 0 && (
+                        <div className={s.formGroup}>
+                            <label className={s.formLabel}>Link to Deal (Optional)</label>
+                            <select className={s.formInput} value={selectedDeal} onChange={e => setSelectedDeal(e.target.value)}>
+                                <option value="">No Deal Association</option>
+                                {borrowerDeals.map(d => <option key={d.id} value={d.id}>{d.propertyAddress || 'Unnamed deal'} (${(d.loanAmount / 1000).toFixed(0)}k)</option>)}
+                            </select>
+                        </div>
+                    )}
+                    <div className={s.tabs} style={{ marginTop: 16 }}>
                         {Object.keys(TEMPLATES).map(t => (
                             <button key={t} className={`${s.tab} ${type === t ? s.tabActive : ''}`} onClick={() => handleTypeChange(t)}>
                                 {t === 'debtConsolidation' ? 'Debt Consol.' : t.charAt(0).toUpperCase() + t.slice(1)}
@@ -105,7 +152,7 @@ export default function ScenarioBuilderPage() {
                     </div>
                     {Object.entries(inputs).map(([key, val]) => (
                         <div className={s.formGroup} key={key}>
-                            <label className={s.formLabel}>{key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase())}</label>
+                            <label className={s.formLabel}>{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</label>
                             <input type="number" className={s.formInput} value={val} onChange={e => setInputs({ ...inputs, [key]: Number(e.target.value) })} />
                         </div>
                     ))}
@@ -135,24 +182,53 @@ export default function ScenarioBuilderPage() {
                     {saved.length > 0 && (
                         <div className={s.card}>
                             <div className={s.cardTitle}>Saved Scenarios</div>
-                            <table className={s.table}>
-                                <thead><tr><th>Compare</th><th>Name</th><th>Type</th><th>Loan</th><th>Payment</th><th>Created</th></tr></thead>
-                                <tbody>
-                                    {saved.map(sc => {
-                                        const r = sc.results as Record<string, number>;
-                                        return (
-                                            <tr key={sc.id}>
-                                                <td><input type="checkbox" checked={comparing.includes(sc.id)} onChange={() => toggleCompare(sc.id)} /></td>
-                                                <td>{sc.name}</td>
-                                                <td><span className={`${s.pill} ${s.pillBlue}`}>{sc.type}</span></td>
-                                                <td>${(r.loanAmount || 0).toLocaleString()}</td>
-                                                <td>${(r.monthlyPayment || 0).toLocaleString()}</td>
-                                                <td style={{ fontSize: 12, color: 'var(--bb-muted)' }}>{new Date(sc.createdAt).toLocaleDateString()}</td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                                {saved.map(sc => {
+                                    const r = sc.results as Record<string, number>;
+                                    return (
+                                        <div key={sc.id} style={{ padding: 12, border: '1px solid var(--bb-border)', borderRadius: 8, backgroundColor: sc.isPreferred ? 'rgba(76, 175, 80, 0.05)' : 'transparent' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                <div style={{ flex: 1 }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                                                        <input type="checkbox" checked={comparing.includes(sc.id)} onChange={() => toggleCompare(sc.id)} title="Compare" />
+                                                        <strong style={{ fontSize: 14 }}>{sc.name}</strong>
+                                                        <span className={`${s.pill} ${s.pillBlue}`} style={{ fontSize: 10 }}>{sc.type}</span>
+                                                        {sc.isPreferred && <span className={`${s.pill} ${s.pillGreen}`} style={{ fontSize: 10 }}>★ Preferred</span>}
+                                                    </div>
+                                                    <div style={{ fontSize: 13, color: 'var(--bb-muted)', marginBottom: 8 }}>
+                                                        Loan: ${r.loanAmount?.toLocaleString()} · Pmt: ${r.monthlyPayment?.toLocaleString()} · LTV: {r.ltv}%
+                                                        {sc.deal && <span> · Deal: {sc.deal.propertyAddress || 'Unnamed deal'}</span>}
+                                                    </div>
+                                                </div>
+                                                <div style={{ display: 'flex', gap: 6 }}>
+                                                    <button className={`${s.btn} ${s.btnSecondary} ${s.btnSmall}`} style={{ padding: '0 8px', height: 26 }} onClick={() => togglePreferred(sc.id, sc.isPreferred)}>
+                                                        {sc.isPreferred ? 'Unmark' : '★ Mark Preferred'}
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {editingNoteId === sc.id ? (
+                                                <div style={{ marginTop: 8 }}>
+                                                    <textarea className={s.formInput} rows={2} placeholder="Add recommendation notes..." value={editNoteText} onChange={e => setEditNoteText(e.target.value)} />
+                                                    <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+                                                        <button className={`${s.btn} ${s.btnPrimary} ${s.btnSmall}`} onClick={() => saveNote(sc.id)}>Save Note</button>
+                                                        <button className={`${s.btn} ${s.btnSecondary} ${s.btnSmall}`} onClick={() => setEditingNoteId(null)}>Cancel</button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                    <div style={{ fontSize: 13, color: sc.recommendationNotes ? 'var(--bb-text)' : 'var(--bb-muted)', fontStyle: sc.recommendationNotes ? 'normal' : 'italic', backgroundColor: 'var(--bb-bg)', padding: '6px 10px', borderRadius: 4, flex: 1, marginRight: 12 }}>
+                                                        {sc.recommendationNotes || 'No notes added yet...'}
+                                                    </div>
+                                                    <button className={`${s.btn} ${s.btnSecondary} ${s.btnSmall}`} style={{ padding: '0 8px' }} onClick={() => { setEditingNoteId(sc.id); setEditNoteText(sc.recommendationNotes || ''); }}>
+                                                        ✎ Edit
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
                     )}
                 </div>
@@ -164,12 +240,12 @@ export default function ScenarioBuilderPage() {
                     <div className={s.cardTitle}>Scenario Comparison</div>
                     <table className={s.table}>
                         <thead>
-                            <tr><th>Metric</th>{compareScenarios.map(sc => <th key={sc.id}>{sc.name}</th>)}</tr>
+                            <tr><th>Metric</th>{compareScenarios.map(sc => <th key={sc.id}>{sc.name} {sc.isPreferred && <span style={{ color: 'var(--bb-success)' }}>★</span>}</th>)}</tr>
                         </thead>
                         <tbody>
                             {['loanAmount', 'monthlyPayment', 'ltv', 'gds', 'tds'].map(metric => (
                                 <tr key={metric}>
-                                    <td style={{ fontWeight: 600 }}>{metric.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase())}</td>
+                                    <td style={{ fontWeight: 600 }}>{metric.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</td>
                                     {compareScenarios.map(sc => {
                                         const r = sc.results as Record<string, number>;
                                         return <td key={sc.id}>{typeof r[metric] === 'number' ? (metric.includes('Amount') || metric.includes('Payment') ? `$${r[metric].toLocaleString()}` : `${r[metric]}%`) : '—'}</td>;

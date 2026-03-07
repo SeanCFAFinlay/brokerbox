@@ -7,8 +7,17 @@ import { logAudit } from '@/lib/audit';
 
 export async function GET(req: NextRequest) {
     const borrowerId = req.nextUrl.searchParams.get('borrowerId');
-    const where = borrowerId ? { borrowerId } : {};
-    const scenarios = await prisma.scenario.findMany({ where, orderBy: { createdAt: 'desc' } });
+    const dealId = req.nextUrl.searchParams.get('dealId');
+
+    const where: any = {};
+    if (borrowerId) where.borrowerId = borrowerId;
+    if (dealId) where.dealId = dealId;
+
+    const scenarios = await prisma.scenario.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        include: { deal: { select: { id: true, propertyAddress: true, loanAmount: true, loanPurpose: true } } }
+    });
     return NextResponse.json(scenarios);
 }
 

@@ -2,6 +2,8 @@ import prisma from '@/lib/prisma';
 import Link from 'next/link';
 import s from '@/styles/shared.module.css';
 import { notFound } from 'next/navigation';
+import BorrowerEditForm from './BorrowerEditForm';
+import NoteTimeline from '@/components/NoteTimeline';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,17 +41,29 @@ export default async function BorrowerDetailPage({ params }: { params: Promise<{
                 <div className={s.kpiCard}><div className={s.kpiLabel}>Active Deals</div><div className={s.kpiValue}>{borrower.deals.length}</div></div>
             </div>
 
+            {/* Edit Form + Doc Checklist grid  */}
             <div className={s.grid2}>
-                {/* Contact Info */}
-                <div className={s.card}>
-                    <div className={s.cardTitle}>Contact Information</div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 14 }}>
-                        <div><strong>Email:</strong> {borrower.email}</div>
-                        <div><strong>Phone:</strong> {borrower.phone || '—'}</div>
-                        <div><strong>Address:</strong> {borrower.address || '—'}, {borrower.city || ''} {borrower.province} {borrower.postalCode || ''}</div>
-                        <div><strong>Liabilities:</strong> ${borrower.liabilities.toLocaleString()}</div>
-                    </div>
-                </div>
+                <BorrowerEditForm borrower={{
+                    id: borrower.id,
+                    firstName: borrower.firstName,
+                    lastName: borrower.lastName,
+                    email: borrower.email,
+                    phone: borrower.phone,
+                    address: borrower.address,
+                    city: borrower.city,
+                    province: borrower.province,
+                    postalCode: borrower.postalCode,
+                    income: borrower.income,
+                    verifiedIncome: borrower.verifiedIncome,
+                    employmentStatus: borrower.employmentStatus,
+                    borrowerType: borrower.borrowerType,
+                    liabilities: borrower.liabilities,
+                    creditScore: borrower.creditScore,
+                    coBorrowerName: borrower.coBorrowerName,
+                    coBorrowerEmail: borrower.coBorrowerEmail,
+                    notes: borrower.notes,
+                    status: borrower.status,
+                }} />
 
                 {/* Doc Checklist */}
                 <div className={s.card}>
@@ -74,7 +88,10 @@ export default async function BorrowerDetailPage({ params }: { params: Promise<{
 
             {/* Deals Table */}
             <div className={s.card} style={{ marginTop: 24 }}>
-                <div className={s.cardTitle}>Deals</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                    <div className={s.cardTitle} style={{ marginBottom: 0 }}>Deals</div>
+                    <Link href={`/deals?borrowerId=${borrower.id}`} className={`${s.btn} ${s.btnSecondary} ${s.btnSmall}`}>View All</Link>
+                </div>
                 {borrower.deals.length === 0 ? (
                     <div className={s.emptyState}>No deals yet.</div>
                 ) : (
@@ -83,16 +100,21 @@ export default async function BorrowerDetailPage({ params }: { params: Promise<{
                         <tbody>
                             {borrower.deals.map(d => (
                                 <tr key={d.id}>
-                                    <td>{d.propertyAddress || '—'}</td>
+                                    <td><Link href={`/deals/${d.id}`} style={{ color: 'var(--bb-accent)', fontWeight: 600 }}>{d.propertyAddress || '—'}</Link></td>
                                     <td>${d.loanAmount.toLocaleString()}</td>
                                     <td>{d.ltv ? `${d.ltv.toFixed(1)}%` : '—'}</td>
-                                    <td><span className={`${s.pill} ${d.stage === 'funded' ? s.pillGreen : d.stage === 'approved' ? s.pillBlue : s.pillGray}`}>{d.stage}</span></td>
+                                    <td><span className={`${s.pill} ${d.stage === 'funded' ? s.pillGreen : d.stage === 'committed' ? s.pillBlue : s.pillGray}`}>{d.stage}</span></td>
                                     <td>{d.lender?.name || '—'}</td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 )}
+            </div>
+
+            {/* Notes Timeline */}
+            <div style={{ marginTop: 24 }}>
+                <NoteTimeline entityType="Borrower" entityId={borrower.id} />
             </div>
 
             {/* Scenarios */}

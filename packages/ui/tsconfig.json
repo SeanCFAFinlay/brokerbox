@@ -1,18 +1,22 @@
 {
-    "compilerOptions": {
-        "target": "ESNext",
-        "module": "CommonJS",
-        "moduleResolution": "node",
-        "strict": true,
-        "jsx": "react-native",
-        "esModuleInterop": true,
-        "skipLibCheck": true,
-        "forceConsistentCasingInFileNames": true,
-        "outDir": "dist",
-        "declaration": true,
-        "declarationMap": true
-    },
-    "include": [
-        "src/**/*"
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "strict": true,
+    "jsx": "react-native",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "dist",
+    "declaration": true,
+    "declarationMap": true,
+    "types": [
+      "react",
+      "react-native"
     ]
+  },
+  "include": [
+    "src/**/*"
+  ]
 }

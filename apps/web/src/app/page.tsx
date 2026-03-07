@@ -7,12 +7,12 @@ import { ActionItems } from '@/components/dashboard/ActionItems';
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
-  const [borrowerCount, lenderCount, dealCount, deals, docRequests, recentLogs] = await Promise.all([
+  const [borrowerCount, lenderCount, dealCount, deals, docRequests, recentLogs, lenders] = await Promise.all([
     prisma.borrower.count(),
     prisma.lender.count(),
     prisma.deal.count(),
     prisma.deal.findMany({
-      orderBy: { updatedAt: 'desc' }, take: 8,
+      orderBy: { updatedAt: 'desc' }, take: 20,
       include: { borrower: true, lender: true },
     }),
     prisma.docRequest.findMany({
@@ -21,20 +21,36 @@ export default async function DashboardPage() {
       orderBy: { createdAt: 'desc' },
       take: 5
     }),
-    prisma.auditLog.findMany({ orderBy: { timestamp: 'desc' }, take: 8 })
+    prisma.auditLog.findMany({ orderBy: { timestamp: 'desc' }, take: 8 }),
+    prisma.lender.findMany({ where: { status: 'active' }, select: { capitalAvailable: true, capitalCommitted: true } }),
   ]);
 
   const funded = deals.filter(d => d.stage === 'funded');
   const totalVolume = funded.reduce((s, d) => s + d.loanAmount, 0);
-  const pipeline = deals.filter(d => d.stage !== 'funded' && d.stage !== 'closed');
+  const pipeline = deals.filter(d => d.stage !== 'funded' && d.stage !== 'declined' && d.stage !== 'archived');
+  const pipelineVolume = pipeline.reduce((s, d) => s + d.loanAmount, 0);
 
-  const stages = ['intake', 'submitted', 'approved', 'funded', 'closed'];
+  // Calculate close rate
+  const totalDecided = deals.filter(d => ['funded', 'declined'].includes(d.stage)).length;
+  const closeRate = totalDecided > 0 ? ((funded.length / totalDecided) * 100).toFixed(0) : '—';
+
+  // Calculate avg days to fund
+  const fundedWithDates = deals.filter(d => d.stage === 'funded' && d.fundingDate && d.createdAt);
+  const avgDaysToFund = fundedWithDates.length > 0
+    ? Math.round(fundedWithDates.reduce((sum, d) => sum + Math.ceil((new Date(d.fundingDate!).getTime() - new Date(d.createdAt).getTime()) / 86400000), 0) / fundedWithDates.length)
+    : '—';
+
+  // Capital available
+  const totalCapital = lenders.reduce((sum, l) => sum + l.capitalAvailable, 0);
+  const committedCapital = lenders.reduce((sum, l) => sum + l.capitalCommitted, 0);
+
+  const stages = ['intake', 'in_review', 'matched', 'committed', 'funded'];
 
   // Pipeline Chart Data
   const chartData = stages.map(st => {
     const stageDeals = deals.filter(d => d.stage === st);
     return {
-      stage: st,
+      stage: st.replace('_', ' '),
       count: stageDeals.length,
       volume: stageDeals.reduce((sum, d) => sum + d.loanAmount, 0)
     };
@@ -49,6 +65,13 @@ export default async function DashboardPage() {
     date: doc.createdAt,
     href: `/borrowers/${doc.borrowerId}`
   }));
+
+  const stageColor = (stage: string) =>
+    stage === 'funded' ? s.pillGreen
+      : stage === 'committed' ? s.pillBlue
+        : stage === 'matched' ? s.pillYellow
+          : stage === 'declined' ? s.pillRed
+            : s.pillGray;
 
   return (
     <>
@@ -74,7 +97,7 @@ export default async function DashboardPage() {
         </div>
         <div className={s.kpiCard}>
           <div className={s.kpiLabel}>Pipeline Volume</div>
-          <div className={s.kpiValue}>${(pipeline.reduce((s, d) => s + d.loanAmount, 0) / 1e6).toFixed(1)}M</div>
+          <div className={s.kpiValue}>${(pipelineVolume / 1e6).toFixed(1)}M</div>
         </div>
         <div className={s.kpiCard}>
           <div className={s.kpiLabel}>Funded Volume</div>
@@ -83,7 +106,24 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <div className={s.grid2}>
+      {/* New metrics row */}
+      <div className={s.kpiRow} style={{ marginTop: 16 }}>
+        <div className={s.kpiCard}>
+          <div className={s.kpiLabel}>Close Rate</div>
+          <div className={s.kpiValue} style={{ color: 'var(--bb-success)' }}>{closeRate}{closeRate !== '—' ? '%' : ''}</div>
+        </div>
+        <div className={s.kpiCard}>
+          <div className={s.kpiLabel}>Avg Days to Fund</div>
+          <div className={s.kpiValue}>{avgDaysToFund}{avgDaysToFund !== '—' ? ' days' : ''}</div>
+        </div>
+        <div className={s.kpiCard}>
+          <div className={s.kpiLabel}>Capital Available</div>
+          <div className={s.kpiValue}>${(totalCapital / 1e6).toFixed(1)}M</div>
+          <div className={s.kpiSub}>${(committedCapital / 1e6).toFixed(1)}M committed</div>
+        </div>
+      </div>
+
+      <div className={s.grid2} style={{ marginTop: 24 }}>
         {/* Pipeline Chart */}
         <div className={s.card}>
           <div className={s.cardTitle}>Pipeline by Stage</div>
@@ -110,20 +150,13 @@ export default async function DashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {deals.slice(0, 5).map(d => {
-                const stageColor = d.stage === 'funded' ? s.pillGreen
-                  : d.stage === 'approved' ? s.pillBlue
-                    : d.stage === 'submitted' ? s.pillYellow
-                      : d.stage === 'closed' ? s.pillGray
-                        : s.pillGray;
-                return (
-                  <tr key={d.id}>
-                    <td>{d.borrower.firstName} {d.borrower.lastName}</td>
-                    <td>${d.loanAmount.toLocaleString()}</td>
-                    <td><span className={`${s.pill} ${stageColor}`}>{d.stage}</span></td>
-                  </tr>
-                );
-              })}
+              {deals.slice(0, 5).map(d => (
+                <tr key={d.id}>
+                  <td>{d.borrower.firstName} {d.borrower.lastName}</td>
+                  <td>${d.loanAmount.toLocaleString()}</td>
+                  <td><span className={`${s.pill} ${stageColor(d.stage)}`}>{d.stage.replace('_', ' ')}</span></td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

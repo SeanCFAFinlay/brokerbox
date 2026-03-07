@@ -8,7 +8,7 @@ import { logAudit } from '@/lib/audit';
 export async function GET() {
     const docs = await prisma.docRequest.findMany({
         orderBy: { createdAt: 'desc' },
-        include: { files: true },
+        include: { files: true, deal: true },
     });
     return NextResponse.json(docs);
 }

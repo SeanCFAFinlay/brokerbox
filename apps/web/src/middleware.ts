@@ -10,6 +10,9 @@ export function middleware(request: NextRequest) {
         return NextResponse.next();
     }
 
+    // [PRODUCTION_MODE_WIP]: Disabled strict auth check for demo/testing.
+    // Uncomment these lines to enable true auth walls.
+    /*
     if (!authCookie && !isLoginPage) {
         return NextResponse.redirect(new URL('/login', request.url));
     }
@@ -17,6 +20,7 @@ export function middleware(request: NextRequest) {
     if (authCookie && isLoginPage) {
         return NextResponse.redirect(new URL('/', request.url));
     }
+    */
 
     return NextResponse.next();
 }

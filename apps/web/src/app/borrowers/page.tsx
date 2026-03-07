@@ -1,7 +1,7 @@
 import prisma from '@/lib/prisma';
-import Link from 'next/link';
 import s from '@/styles/shared.module.css';
 import BorrowerActions from './BorrowerActions';
+import BorrowerTable from './BorrowerTable';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,29 +23,7 @@ export default async function BorrowersPage() {
                 </div>
             </div>
 
-            <div className={s.card}>
-                <table className={s.table}>
-                    <thead>
-                        <tr>
-                            <th>Name</th><th>Email</th><th>Province</th><th>Credit Score</th>
-                            <th>Income</th><th>Deals</th><th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {borrowers.map(b => (
-                            <tr key={b.id}>
-                                <td><Link href={`/borrowers/${b.id}`} style={{ color: 'var(--bb-accent)', fontWeight: 600 }}>{b.firstName} {b.lastName}</Link></td>
-                                <td>{b.email}</td>
-                                <td>{b.province}</td>
-                                <td>{b.creditScore}</td>
-                                <td>${b.income.toLocaleString()}</td>
-                                <td>{b._count.deals}</td>
-                                <td><span className={`${s.pill} ${b.status === 'active' ? s.pillGreen : s.pillGray}`}>{b.status}</span></td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+            <BorrowerTable borrowers={borrowers as any} />
         </>
     );
 }

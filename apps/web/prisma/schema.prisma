@@ -7,14 +7,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─── Auth & User ────────────────────────────────────────────────────────────────
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
   name      String   @default("Demo Broker")
-  role      String   @default("broker")
+  role      String   @default("broker") // admin | broker | readonly
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// ─── Borrower ───────────────────────────────────────────────────────────────────
 
 model Borrower {
   id               String    @id @default(cuid())
@@ -27,87 +31,172 @@ model Borrower {
   province         String    @default("ON")
   postalCode       String?
   income           Float     @default(0)
+  verifiedIncome   Float?
   employmentStatus String    @default("employed")
+  borrowerType     String    @default("primary") // primary | co-borrower | guarantor
   liabilities      Float     @default(0)
   creditScore      Int       @default(650)
   creditScoreDate  DateTime?
+  dateOfBirth      DateTime?
+  coBorrowerName   String?
+  coBorrowerEmail  String?
+  notes            String?
   status           String    @default("active")
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
+
   deals            Deal[]
   scenarios        Scenario[]
   docRequests      DocRequest[]
 }
+
+// ─── Lender ─────────────────────────────────────────────────────────────────────
 
 model Lender {
   id                   String   @id @default(cuid())
   name                 String
   contactEmail         String?
   contactPhone         String?
+  contactName          String?
+
+  // Eligibility gates
   minCreditScore       Int      @default(600)
   maxLTV               Float    @default(80)
   maxGDS               Float    @default(39)
   maxTDS               Float    @default(44)
   supportedProvinces   String[] @default(["ON"])
   propertyTypes        String[] @default(["residential"])
+
+  // Product details
+  positionTypes        String[] @default(["1st"])        // 1st, 2nd, 3rd, bridge
+  productCategories    String[] @default(["residential"]) // residential, commercial, land, construction, bridge
+  minLoan              Float    @default(50000)
+  maxLoan              Float    @default(5000000)
+  termMin              Int      @default(6)              // months
+  termMax              Int      @default(360)            // months
+
+  // Pricing
   pricingPremium       Float    @default(0)
   baseRate             Float    @default(5.5)
+  lenderFees           Float    @default(0)              // % fee
+
+  // Scoring attributes
   speed                Int      @default(5)
   exceptionsTolerance  Int      @default(3)
   appetite             Int      @default(5)
+
+  // Capital tracking
+  capitalAvailable     Float    @default(0)
+  capitalCommitted     Float    @default(0)
+
+  // Notes & docs
+  notes                String?
+  underwritingNotes    String?
   documentRequirements String[] @default([])
+
   status               String   @default("active")
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
   deals                Deal[]
 }
 
+// ─── Deal ───────────────────────────────────────────────────────────────────────
+
 model Deal {
   id              String    @id @default(cuid())
   borrowerId      String
   lenderId        String?
-  stage           String    @default("intake")
+  stage           String    @default("intake") // intake | in_review | matched | committed | funded | declined | archived
+  priority        String    @default("normal") // low | normal | high | urgent
+
+  // Property
   propertyAddress String?
   propertyType    String    @default("residential")
   propertyValue   Float     @default(0)
+
+  // Loan
   loanAmount      Float     @default(0)
   interestRate    Float?
   termMonths      Int       @default(300)
   amortMonths     Int       @default(300)
+  position        String    @default("1st") // 1st | 2nd | 3rd | bridge
+  loanPurpose     String    @default("purchase") // purchase | refinance | renewal | equity_takeout | bridge | construction
+  occupancyType   String    @default("owner_occupied") // owner_occupied | rental | investment | commercial
+  exitStrategy    String?
+
+  // Ratios
   ltv             Float?
   gds             Float?
   tds             Float?
   monthlyPayment  Float?
   matchScore      Int?
+
+  // Fees
+  brokerFee       Float?
+  lenderFee       Float?
+
+  // Dates
+  closingDate     DateTime?
+  fundingDate     DateTime?
   notes           String?
+
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+
+  // Relations
   borrower        Borrower  @relation(fields: [borrowerId], references: [id], onDelete: Cascade)
   lender          Lender?   @relation(fields: [lenderId], references: [id])
   docRequests     DocRequest[]
+  stageHistory    DealStageHistory[]
+  scenarios       Scenario[]
 }
 
-model Scenario {
-  id         String   @id @default(cuid())
-  borrowerId String
-  name       String
-  type       String   @default("purchase")
-  inputs     Json     @default("{}")
-  results    Json     @default("{}")
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  borrower   Borrower @relation(fields: [borrowerId], references: [id], onDelete: Cascade)
+// ─── Deal Stage History ─────────────────────────────────────────────────────────
+
+model DealStageHistory {
+  id        String   @id @default(cuid())
+  dealId    String
+  fromStage String
+  toStage   String
+  changedBy String   @default("system")
+  changedAt DateTime @default(now())
+
+  deal      Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
 }
+
+// ─── Scenario ───────────────────────────────────────────────────────────────────
+
+model Scenario {
+  id                  String   @id @default(cuid())
+  borrowerId          String
+  dealId              String?
+  name                String
+  type                String   @default("purchase")
+  inputs              Json     @default("{}")
+  results             Json     @default("{}")
+  isPreferred         Boolean  @default(false)
+  recommendationNotes String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  borrower            Borrower @relation(fields: [borrowerId], references: [id], onDelete: Cascade)
+  deal                Deal?    @relation(fields: [dealId], references: [id])
+}
+
+// ─── DocVault ───────────────────────────────────────────────────────────────────
 
 model DocRequest {
   id           String         @id @default(cuid())
   borrowerId   String
   dealId       String?
   docType      String
-  status       String         @default("requested")
+  category     String         @default("general") // income | identity | property | legal | general
+  status       String         @default("requested") // requested | uploaded | verified | rejected | expired
+  expiresAt    DateTime?
   notes        String?
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
+
   borrower     Borrower       @relation(fields: [borrowerId], references: [id], onDelete: Cascade)
   deal         Deal?          @relation(fields: [dealId], references: [id])
   files        DocumentFile[]
@@ -118,10 +207,28 @@ model DocumentFile {
   docRequestId String
   filename     String
   path         String
+  mimeType     String     @default("application/octet-stream")
+  fileSize     Int        @default(0)
   version      Int        @default(1)
   uploadedAt   DateTime   @default(now())
+
   docRequest   DocRequest @relation(fields: [docRequestId], references: [id], onDelete: Cascade)
 }
+
+// ─── Notes (polymorphic) ────────────────────────────────────────────────────────
+
+model Note {
+  id         String   @id @default(cuid())
+  entityType String   // Borrower | Deal | Lender
+  entityId   String
+  content    String
+  createdBy  String   @default("system")
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+}
+
+// ─── Audit Log ──────────────────────────────────────────────────────────────────
 
 model AuditLog {
   id        String   @id @default(cuid())
@@ -131,4 +238,21 @@ model AuditLog {
   action    String
   diff      Json?
   timestamp DateTime @default(now())
+}
+
+// ─── Brokerage Settings (singleton) ─────────────────────────────────────────────
+
+model BrokerageSettings {
+  id               String  @id @default("default")
+  brokerageName    String  @default("BrokerBox Financial Group")
+  licenseNumber    String  @default("")
+  principalBroker  String  @default("")
+  officeAddress    String  @default("")
+  officePhone      String  @default("")
+  officeEmail      String  @default("")
+  defaultBrokerFee Float   @default(1.0)  // %
+  defaultLenderFee Float   @default(0.5)  // %
+  defaultTermMonths Int    @default(12)
+  defaultAmortMonths Int   @default(300)
+  defaultInterestRate Float @default(5.5)
 }

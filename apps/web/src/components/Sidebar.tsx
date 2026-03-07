@@ -11,8 +11,11 @@ const NAV = [
     { label: 'Deal Desk', href: '/deals', icon: '📋' },
     { label: 'BrokerBox Match', href: '/match', icon: '🎯' },
     { label: 'Scenario Builder', href: '/scenarios', icon: '🧮' },
+    { label: 'Calculators', href: '/calculators', icon: '🔢' },
     { label: 'DocVault', href: '/docvault', icon: '📁' },
+    { label: 'FundFlow', href: '/fundflow', icon: '💰' },
     { label: 'Reports', href: '/reports', icon: '📈' },
+    { label: 'Settings', href: '/settings', icon: '⚙️' },
 ];
 
 export default function Sidebar() {

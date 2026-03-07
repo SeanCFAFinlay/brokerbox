@@ -3,23 +3,26 @@
  * Rules-based filtering + scoring-based ranking
  */
 
-interface BorrowerData {
+export interface BorrowerData {
     creditScore: number;
     income: number;
     province: string;
     liabilities: number;
 }
 
-interface DealData {
+export interface DealData {
     propertyValue: number;
     loanAmount: number;
     propertyType: string;
+    position: string;
+    loanPurpose: string;
+    termMonths: number;
     ltv: number;
     gds: number;
     tds: number;
 }
 
-interface LenderData {
+export interface LenderData {
     id: string;
     name: string;
     minCreditScore: number;
@@ -28,6 +31,11 @@ interface LenderData {
     maxTDS: number;
     supportedProvinces: string[];
     propertyTypes: string[];
+    positionTypes: string[];
+    minLoan: number;
+    maxLoan: number;
+    termMin: number;
+    termMax: number;
     baseRate: number;
     speed: number;
     exceptionsTolerance: number;
@@ -62,24 +70,40 @@ export function runMatch(borrower: BorrowerData, deal: DealData, lenders: Lender
     for (const lender of lenders) {
         const failures: string[] = [];
 
-        // Gating rules
+        // Gating rules - Credit & Ratios
         if (borrower.creditScore < lender.minCreditScore) {
             failures.push(`Credit score ${borrower.creditScore} < min ${lender.minCreditScore}`);
         }
         if (deal.ltv > lender.maxLTV) {
-            failures.push(`LTV ${deal.ltv.toFixed(1)}% > max ${lender.maxLTV}%`);
+            failures.push(`LTV ${(deal.ltv || 0).toFixed(1)}% > max ${lender.maxLTV}%`);
         }
         if (deal.gds > lender.maxGDS) {
-            failures.push(`GDS ${deal.gds.toFixed(1)}% > max ${lender.maxGDS}%`);
+            failures.push(`GDS ${(deal.gds || 0).toFixed(1)}% > max ${lender.maxGDS}%`);
         }
         if (deal.tds > lender.maxTDS) {
-            failures.push(`TDS ${deal.tds.toFixed(1)}% > max ${lender.maxTDS}%`);
+            failures.push(`TDS ${(deal.tds || 0).toFixed(1)}% > max ${lender.maxTDS}%`);
         }
+
+        // Gating rules - Loan Size & Term
+        if (deal.loanAmount < lender.minLoan) {
+            failures.push(`Loan amount $${deal.loanAmount.toLocaleString()} < min $${lender.minLoan.toLocaleString()}`);
+        }
+        if (deal.loanAmount > lender.maxLoan) {
+            failures.push(`Loan amount $${deal.loanAmount.toLocaleString()} > max $${lender.maxLoan.toLocaleString()}`);
+        }
+        if (deal.termMonths < lender.termMin || deal.termMonths > lender.termMax) {
+            failures.push(`Term ${deal.termMonths} mos outside allowed range ${lender.termMin}-${lender.termMax}`);
+        }
+
+        // Gating rules - Types & Position
         if (!lender.supportedProvinces.includes(borrower.province)) {
             failures.push(`Province ${borrower.province} not supported`);
         }
         if (!lender.propertyTypes.includes(deal.propertyType)) {
             failures.push(`Property type ${deal.propertyType} not supported`);
+        }
+        if (!lender.positionTypes.includes(deal.position)) {
+            failures.push(`Position ${deal.position} not supported`);
         }
 
         const passed = failures.length === 0;
@@ -93,9 +117,9 @@ export function runMatch(borrower: BorrowerData, deal: DealData, lenders: Lender
         breakdown.push({ factor: 'Rate Competitiveness', score: Math.round(rateScore), weight: WEIGHTS.rateCompetitiveness, weighted: rateScore * WEIGHTS.rateCompetitiveness });
 
         // Policy fit: how much headroom in LTV/GDS/TDS
-        const ltvMargin = Math.max(0, lender.maxLTV - deal.ltv);
-        const gdsMargin = Math.max(0, lender.maxGDS - deal.gds);
-        const tdsMargin = Math.max(0, lender.maxTDS - deal.tds);
+        const ltvMargin = Math.max(0, lender.maxLTV - (deal.ltv || 0));
+        const gdsMargin = Math.max(0, lender.maxGDS - (deal.gds || 0));
+        const tdsMargin = Math.max(0, lender.maxTDS - (deal.tds || 0));
         const policyScore = Math.min(100, ((ltvMargin + gdsMargin + tdsMargin) / 30) * 100);
         breakdown.push({ factor: 'Policy Fit', score: Math.round(policyScore), weight: WEIGHTS.policyFit, weighted: policyScore * WEIGHTS.policyFit });
 

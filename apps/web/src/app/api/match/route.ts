@@ -15,7 +15,6 @@ export async function POST(req: NextRequest) {
     if (dealId) {
         deal = await prisma.deal.findUnique({ where: { id: dealId } });
     } else {
-        // Use the most recent deal for this borrower
         deal = await prisma.deal.findFirst({ where: { borrowerId }, orderBy: { updatedAt: 'desc' } });
     }
 
@@ -40,6 +39,9 @@ export async function POST(req: NextRequest) {
             propertyValue: deal.propertyValue,
             loanAmount: deal.loanAmount,
             propertyType: deal.propertyType,
+            position: deal.position,
+            loanPurpose: deal.loanPurpose,
+            termMonths: deal.termMonths,
             ltv,
             gds,
             tds,
@@ -53,6 +55,11 @@ export async function POST(req: NextRequest) {
             maxTDS: l.maxTDS,
             supportedProvinces: l.supportedProvinces,
             propertyTypes: l.propertyTypes,
+            positionTypes: l.positionTypes,
+            minLoan: l.minLoan,
+            maxLoan: l.maxLoan,
+            termMin: l.termMin,
+            termMax: l.termMax,
             baseRate: l.baseRate,
             speed: l.speed,
             exceptionsTolerance: l.exceptionsTolerance,
@@ -64,5 +71,3 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ borrower, deal, results });
 }
-
-
