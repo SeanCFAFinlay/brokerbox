@@ -16,7 +16,6 @@
     },
     "devDependencies": {
         "@expo/cli": "^55.0.14",
-        "@types/minimatch": "^6.0.0",
         "@types/react-native": "^0.73.0"
     }
 }
