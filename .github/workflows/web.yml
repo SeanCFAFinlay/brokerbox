@@ -1,4 +1,4 @@
-﻿name: BrokerBox Web CI
+name: BrokerBox Web CI
 
 on:
   push:
