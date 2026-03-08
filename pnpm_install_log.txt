@@ -1,0 +1,23 @@
+Scope: all 12 workspace projects
+Progress: resolved 1, reused 0, downloaded 0, added 0
+apps/broker                              | ΓÇëWARNΓÇë deprecated @types/minimatch@6.0.0
+packages/ui                              | ΓÇëWARNΓÇë deprecated @types/react-native@0.73.0
+Progress: resolved 56, reused 0, downloaded 0, added 0
+packages/ui                              | ΓÇëWARNΓÇë deprecated react-native-vector-icons@10.3.0
+Progress: resolved 63, reused 0, downloaded 0, added 0
+Progress: resolved 294, reused 0, downloaded 0, added 0
+Progress: resolved 653, reused 0, downloaded 0, added 0
+Progress: resolved 935, reused 0, downloaded 0, added 0
+Progress: resolved 1161, reused 0, downloaded 0, added 0
+Progress: resolved 1393, reused 0, downloaded 0, added 0
+ΓÇëWARNΓÇë 9 deprecated subdependencies found: glob@7.2.3, inflight@1.0.6, rimraf@2.7.1, rimraf@3.0.2, rollup-plugin-terser@7.0.2, source-map@0.8.0-beta.0, sourcemap-codec@1.4.8, workbox-cacheable-response@6.6.0, workbox-google-analytics@6.6.0
+Progress: resolved 1464, reused 0, downloaded 0, added 0
+
+Progress: resolved 1464, reused 49, downloaded 0, added 0
+Progress: resolved 1464, reused 141, downloaded 0, added 0
+Packages: +7 -139
++++-----------------------------------------------------------------------------
+Progress: resolved 1464, reused 141, downloaded 0, added 6
+Progress: resolved 1464, reused 141, downloaded 0, added 7
+Progress: resolved 1464, reused 141, downloaded 0, added 7, done
+Done in 14.6s using pnpm v10.6.5
