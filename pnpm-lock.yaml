@@ -432,10 +432,10 @@ importers:
         specifier: ^3.9.1
         version: 3.10.0(react-hook-form@7.71.2(react@19.2.3))
       '@prisma/client':
-        specifier: ^5.22.0
+        specifier: 5.22.0
         version: 5.22.0(prisma@5.22.0)
       client-only:
-        specifier: ^0.0.1
+        specifier: 0.0.1
         version: 0.0.1
       lucide-react:
         specifier: ^0.576.0

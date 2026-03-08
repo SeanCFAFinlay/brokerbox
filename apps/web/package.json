@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "pnpm exec prisma generate --schema=../../packages/database/prisma/schema.prisma && next build",
+    "build": "prisma generate --schema=../../packages/database/prisma/schema.prisma && next build",
     "start": "next start",
     "lint": "eslint .",
     "db:generate": "pnpm exec prisma generate --schema=../../packages/database/prisma/schema.prisma",
@@ -30,8 +30,8 @@
     "react-hook-form": "^7.71.2",
     "recharts": "^3.7.0",
     "zod": "^4.3.6",
-    "@prisma/client": "^5.22.0",
-    "client-only": "^0.0.1"
+    "@prisma/client": "5.22.0",
+    "client-only": "0.0.1"
   },
   "devDependencies": {
     "@types/node": "^20",
@@ -41,6 +41,6 @@
     "eslint-config-next": "16.1.6",
     "tsx": "^4.21.0",
     "typescript": "^5",
-    "prisma": "^5.22.0"
+    "prisma": "5.22.0"
   }
 }
