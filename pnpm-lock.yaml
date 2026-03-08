@@ -398,6 +398,9 @@ importers:
         specifier: ^4.3.6
         version: 4.3.6
     devDependencies:
+      '@types/minimatch':
+        specifier: ^5.1.2
+        version: 5.1.2
       '@types/react':
         specifier: ^18.2.0
         version: 18.2.79
@@ -2638,6 +2641,9 @@ packages:
 
   '@types/jsonwebtoken@9.0.10':
     resolution: {integrity: sha512-asx5hIG9Qmf/1oStypjanR7iKTv0gXQ1Ov/jfrX6kS/EO0OFni8orbmGCn0672NHR3kXHwpAwR+B368ZGN/2rA==}
+
+  '@types/minimatch@5.1.2':
+    resolution: {integrity: sha512-K0VQKziLUWkVKiRVrx4a40iPaxTUefQmjtkQofBkYRcoaaL/8rhwDWww9qWbrgicNOgnpIsMxyNIUM4+n6dUIA==}
 
   '@types/minimatch@6.0.0':
     resolution: {integrity: sha512-zmPitbQ8+6zNutpwgcQuLcsEpn/Cj54Kbn7L5pX0Os5kdWplB7xPgEh/g+SWOB/qmows2gpuCaPyduq8ZZRnxA==}
@@ -10058,6 +10064,8 @@ snapshots:
     dependencies:
       '@types/ms': 2.1.0
       '@types/node': 20.19.37
+
+  '@types/minimatch@5.1.2': {}
 
   '@types/minimatch@6.0.0':
     dependencies:
