@@ -12,10 +12,10 @@
     }
   },
   "scripts": {
-    "build": "prisma generate && tsc",
+    "build": "pnpm exec prisma generate --schema=./prisma/schema.prisma && tsc",
     "dev": "tsc -w",
-    "db:generate": "prisma generate",
-    "db:push": "prisma db push"
+    "db:generate": "pnpm exec prisma generate --schema=./prisma/schema.prisma",
+    "db:push": "pnpm exec prisma db push --schema=./prisma/schema.prisma"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0"
