@@ -1,5 +1,5 @@
 {
   "framework": "nextjs",
   "installCommand": "pnpm install --no-frozen-lockfile",
-  "buildCommand": "pnpm run db:generate:web && pnpm --dir apps/web build"
+  "buildCommand": "pnpm run db:generate && pnpm --filter @brokerbox/web build && rm -rf .next && mkdir -p .next && cp -r apps/web/.next/. .next/"
 }
