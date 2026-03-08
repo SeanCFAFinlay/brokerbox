@@ -12,10 +12,7 @@
         "baseUrl": ".",
         "moduleResolution": "NodeNext",
         "outDir": "./dist",
-        "rootDir": "./src",
-        "types": [
-            "node"
-        ]
+        "rootDir": "./src"
     },
     "include": [
         "src/**/*.ts"
