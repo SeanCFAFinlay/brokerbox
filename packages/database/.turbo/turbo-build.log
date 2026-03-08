@@ -1,7 +1,8 @@
 
 > @brokerbox/database@1.0.0 build C:\Users\sean\BBBUILDOUT\brokerbox\packages\database
-> pnpm exec prisma generate --schema=./prisma/schema.prisma && tsc
+> cross-env PRISMA_GENERATE_SKIP_AUTOINSTALL=true pnpm exec prisma generate --schema=./prisma/schema.prisma && tsc
 
 Prisma schema loaded from prisma\schema.prisma
-Error: Command failed with exit code 1: pnpm add @prisma/client@5.22.0 --silent
+Error: Could not resolve @prisma/client.
+Please try to install it with npm install @prisma/client and rerun pnpm dlx "prisma generate" 🙏.
  ELIFECYCLE  Command failed with exit code 1.

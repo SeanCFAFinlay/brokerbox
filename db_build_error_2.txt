@@ -1,0 +1,27 @@
+
+> brokerbox@ build C:\Users\sean\BBBUILDOUT\brokerbox
+> turbo run build "--filter" "@brokerbox/database"
+
+ΓÇó turbo 2.8.14
+ΓÇó Packages in scope: @brokerbox/database
+ΓÇó Running build in 1 packages
+ΓÇó Remote caching disabled
+@brokerbox/database:build: cache miss, executing bb65b264fd203074
+@brokerbox/database:build: 
+@brokerbox/database:build: > @brokerbox/database@1.0.0 build C:\Users\sean\BBBUILDOUT\brokerbox\packages\database
+@brokerbox/database:build: > cross-env PRISMA_GENERATE_SKIP_AUTOINSTALL=true pnpm exec prisma generate --schema=./prisma/schema.prisma && tsc
+@brokerbox/database:build: 
+@brokerbox/database:build: Prisma schema loaded from prisma\schema.prisma
+@brokerbox/database:build: Error: Could not resolve @prisma/client.
+@brokerbox/database:build: Please try to install it with npm install @prisma/client and rerun pnpm dlx "prisma generate" ≡ƒÖÅ.
+@brokerbox/database:build: ΓÇëELIFECYCLEΓÇë Command failed with exit code 1.
+@brokerbox/database:build: ERROR: command finished with error: command (C:\Users\sean\BBBUILDOUT\brokerbox\packages\database) C:\Program Files\nodejs\pnpm.CMD run build exited (1)
+@brokerbox/database#build: command (C:\Users\sean\BBBUILDOUT\brokerbox\packages\database) C:\Program Files\nodejs\pnpm.CMD run build exited (1)
+
+ Tasks:    0 successful, 1 total
+Cached:    0 cached, 1 total
+  Time:    4.723s 
+Failed:    @brokerbox/database#build
+
+ ERROR  run failed: command  exited (1)
+ΓÇëELIFECYCLEΓÇë Command failed with exit code 1.
