@@ -1,37 +1,12 @@
-import { PrismaClient as RealPrismaClient } from '@prisma/client';
-
 export * from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 
-// Explicitly defining models if Prisma generator hides them
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: string;
-  passwordHash: string;
-  createdAt: Date;
-  updatedAt: Date;
+declare global {
+  // eslint-disable-next-line no-var
+  var __prisma: PrismaClient | undefined;
 }
 
-export interface Lender {
-  id: string;
-  name: string;
-  contactEmail?: string | null;
-  status: string;
-}
+export const prisma =
+  globalThis.__prisma ?? new PrismaClient({ log: ["error", "warn"] });
 
-export interface Deal {
-  id: string;
-  borrowerId: string;
-  lenderId?: string | null;
-  stage: string;
-  propertyValue: number;
-  loanAmount: number;
-}
-
-export interface MatchResult {
-  lenderId: string;
-  score: number;
-  passed: boolean;
-  failures: string[];
-}
+if (process.env.NODE_ENV !== "production") globalThis.__prisma = prisma;
