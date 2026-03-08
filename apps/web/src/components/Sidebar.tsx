@@ -15,6 +15,7 @@ const NAV = [
     { label: 'DocVault', href: '/docvault', icon: '📁' },
     { label: 'FundFlow', href: '/fundflow', icon: '💰' },
     { label: 'Reports', href: '/reports', icon: '📈' },
+    { label: 'Loans', href: '/loans', icon: '💰' },
     { label: 'Settings', href: '/settings', icon: '⚙️' },
     { label: 'Users', href: '/users', icon: '🧑‍💻' },
 ];
