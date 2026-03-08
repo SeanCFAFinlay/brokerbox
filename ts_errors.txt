@@ -1,7 +1,0 @@
-
-> brokerbox@ typecheck C:\Users\sean\BBBUILDOUT\brokerbox
-> turbo run typecheck
-
-'turbo' is not recognized as an internal or external command,
-operable program or batch file.
-ΓÇëELIFECYCLEΓÇë Command failed with exit code 1.
