@@ -1,4 +1,5 @@
 {
-  "installCommand": "pnpm install --frozen-lockfile",
-  "buildCommand": "pnpm build"
+  "buildCommand": "pnpm run build --filter @brokerbox/web",
+  "installCommand": "pnpm install --ignore-scripts",
+  "framework": "nextjs"
 }
