@@ -1,0 +1,84 @@
+
+> brokerbox@ build C:\Users\sean\BBBUILDOUT\brokerbox
+> turbo run build
+
+ΓÇó turbo 2.8.14
+ΓÇó Packages in scope: @brokerbox/api, @brokerbox/broker, @brokerbox/core, @brokerbox/database, @brokerbox/mobile, @brokerbox/types, @brokerbox/ui, @brokerbox/utils, @brokerbox/web, client, lender
+ΓÇó Running build in 11 packages
+ΓÇó Remote caching disabled
+@brokerbox/utils:build: cache miss, executing 521a1ba417a65f04
+@brokerbox/core:build: cache miss, executing be4f7b9d5a5cb84b
+@brokerbox/database:build: cache miss, executing 481328b1c68f0fba
+@brokerbox/ui:build: cache miss, executing 87da03fb73c0fe98
+@brokerbox/types:build: cache miss, executing 10490fce7f80a5e3
+@brokerbox/database:build: 
+@brokerbox/database:build: > @brokerbox/database@1.0.0 build C:\Users\sean\BBBUILDOUT\brokerbox\packages\database
+@brokerbox/database:build: > prisma generate --schema=./prisma/schema.prisma && tsc
+@brokerbox/database:build: 
+@brokerbox/utils:build: 
+@brokerbox/utils:build: > @brokerbox/utils@1.0.0 build C:\Users\sean\BBBUILDOUT\brokerbox\packages\utils
+@brokerbox/utils:build: > tsc
+@brokerbox/utils:build: 
+@brokerbox/core:build: 
+@brokerbox/core:build: > @brokerbox/core@1.0.0 build C:\Users\sean\BBBUILDOUT\brokerbox\packages\core
+@brokerbox/core:build: > tsc
+@brokerbox/core:build: 
+@brokerbox/ui:build: 
+@brokerbox/ui:build: > @brokerbox/ui@1.0.0 build C:\Users\sean\BBBUILDOUT\brokerbox\packages\ui
+@brokerbox/ui:build: > tsc
+@brokerbox/ui:build: 
+@brokerbox/types:build: 
+@brokerbox/types:build: > @brokerbox/types@1.0.0 build C:\Users\sean\BBBUILDOUT\brokerbox\packages\types
+@brokerbox/types:build: > tsc
+@brokerbox/types:build: 
+@brokerbox/database:build: Prisma schema loaded from prisma\schema.prisma
+@brokerbox/types:build: error TS2688: Cannot find type definition file for 'minimatch'.
+@brokerbox/types:build:   The file is in the program because:
+@brokerbox/types:build:     Entry point for implicit type library 'minimatch'
+@brokerbox/types:build: error TS2688: Cannot find type definition file for 'react-native'.
+@brokerbox/types:build:   The file is in the program because:
+@brokerbox/types:build:     Entry point for implicit type library 'react-native'
+@brokerbox/types:build: ΓÇëELIFECYCLEΓÇë Command failed with exit code 2.
+@brokerbox/core:build: error TS2688: Cannot find type definition file for 'minimatch'.
+@brokerbox/core:build:   The file is in the program because:
+@brokerbox/core:build:     Entry point for implicit type library 'minimatch'
+@brokerbox/core:build: error TS2688: Cannot find type definition file for 'react-native'.
+@brokerbox/core:build:   The file is in the program because:
+@brokerbox/core:build:     Entry point for implicit type library 'react-native'
+@brokerbox/core:build: ΓÇëELIFECYCLEΓÇë Command failed with exit code 2.
+@brokerbox/database:build: 
+@brokerbox/database:build: Γ£ö Generated Prisma Client (v5.22.0) to .\..\..\node_modules\.pnpm\@prisma+client@5.22.0_prisma@5.22.0\node_modules\@prisma\client in 1.03s
+@brokerbox/database:build: 
+@brokerbox/database:build: Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+@brokerbox/database:build: 
+@brokerbox/database:build: Tip: Want real-time updates to your database without manual polling? Discover how with Pulse: https://pris.ly/tip-0-pulse
+@brokerbox/database:build: 
+@brokerbox/database:build: ΓöîΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÉ
+@brokerbox/database:build: Γöé  Update available 5.22.0 -> 7.4.2                       Γöé
+@brokerbox/database:build: Γöé                                                         Γöé
+@brokerbox/database:build: Γöé  This is a major update - please follow the guide at    Γöé
+@brokerbox/database:build: Γöé  https://pris.ly/d/major-version-upgrade                Γöé
+@brokerbox/database:build: Γöé                                                         Γöé
+@brokerbox/database:build: Γöé  Run the following to update                            Γöé
+@brokerbox/database:build: Γöé    npm i --save-dev prisma@latest                       Γöé
+@brokerbox/database:build: Γöé    npm i @prisma/client@latest                          Γöé
+@brokerbox/database:build: ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÿ
+@brokerbox/utils:build: src/match.ts(1,30): error TS6059: File 'C:/Users/sean/BBBUILDOUT/brokerbox/packages/database/src/index.ts' is not under 'rootDir' 'C:/Users/sean/BBBUILDOUT/brokerbox/packages/utils/src'. 'rootDir' is expected to contain all source files.
+@brokerbox/utils:build:   The file is in the program because:
+@brokerbox/utils:build:     Imported via '@brokerbox/database' from file 'C:/Users/sean/BBBUILDOUT/brokerbox/packages/utils/src/match.ts'
+@brokerbox/utils:build:     Imported via '@brokerbox/database' from file 'C:/Users/sean/BBBUILDOUT/brokerbox/packages/utils/src/storage.ts'
+@brokerbox/utils:build:   File is ECMAScript module because 'C:/Users/sean/BBBUILDOUT/brokerbox/packages/database/package.json' has field "type" with value "module"
+@brokerbox/utils:build: src/match.ts(15,14): error TS2551: Property 'borrower' does not exist on type 'Partial<{ id: string; borrowerId: string; lenderId: string | null; stage: string; priority: string; propertyAddress: string | null; propertyType: string; propertyValue: number; loanAmount: number; ... 21 more ...; updatedAt: Date; }>'. Did you mean 'borrowerId'?
+@brokerbox/utils:build: src/match.ts(15,44): error TS2551: Property 'borrower' does not exist on type 'Partial<{ id: string; borrowerId: string; lenderId: string | null; stage: string; priority: string; propertyAddress: string | null; propertyType: string; propertyValue: number; loanAmount: number; ... 21 more ...; updatedAt: Date; }>'. Did you mean 'borrowerId'?
+@brokerbox/utils:build: src/match.ts(16,44): error TS2551: Property 'borrower' does not exist on type 'Partial<{ id: string; borrowerId: string; lenderId: string | null; stage: string; priority: string; propertyAddress: string | null; propertyType: string; propertyValue: number; loanAmount: number; ... 21 more ...; updatedAt: Date; }>'. Did you mean 'borrowerId'?
+@brokerbox/utils:build: ΓÇëELIFECYCLEΓÇë Command failed with exit code 2.
+@brokerbox/types:build: ERROR: command finished with error: command (C:\Users\sean\BBBUILDOUT\brokerbox\packages\types) C:\Program Files\nodejs\pnpm.CMD run build exited (2)
+@brokerbox/types#build: command (C:\Users\sean\BBBUILDOUT\brokerbox\packages\types) C:\Program Files\nodejs\pnpm.CMD run build exited (2)
+
+ Tasks:    0 successful, 5 total
+Cached:    0 cached, 5 total
+  Time:    6.265s 
+Failed:    @brokerbox/types#build
+
+ ERROR  run failed: command  exited (2)
+ΓÇëELIFECYCLEΓÇë Command failed with exit code 2.
