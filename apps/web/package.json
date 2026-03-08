@@ -30,7 +30,8 @@
     "react-hook-form": "^7.71.2",
     "recharts": "^3.7.0",
     "zod": "^4.3.6",
-    "@prisma/client": "^5.22.0"
+    "@prisma/client": "^5.22.0",
+    "client-only": "^0.0.1"
   },
   "devDependencies": {
     "@types/node": "^20",
@@ -40,7 +41,6 @@
     "eslint-config-next": "16.1.6",
     "tsx": "^4.21.0",
     "typescript": "^5",
-    "prisma": "^5.22.0",
-    "client-only": "0.0.1"
+    "prisma": "^5.22.0"
   }
 }
