@@ -10,15 +10,19 @@ datasource db {
 // ─── Auth & User ────────────────────────────────────────────────────────────────
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
+  id                  String   @id @default(cuid())
+  email               String   @unique
   name                String   @default("Demo Broker")
-  role                String   @default("broker") // admin | broker | readonly
+  role                String   @default("broker") // admin | broker | readonly | lender_agent | borrower | investor
   baseCommissionSplit Float    @default(50) // %
   createdAt           DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt           DateTime @updatedAt
+  lenderId            String?
 
-  tasks     Task[]
+  tasks         Task[]
+  lender        Lender?        @relation(fields: [lenderId], references: [id])
+  investments   Investment[]
+  notifications Notification[]
 }
 
 // ─── Borrower ───────────────────────────────────────────────────────────────────
@@ -48,114 +52,153 @@ model Borrower {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-  deals            Deal[]
-  scenarios        Scenario[]
-  docRequests      DocRequest[]
+  deals       Deal[]
+  scenarios   Scenario[]
+  docRequests DocRequest[]
 }
 
 // ─── Lender ─────────────────────────────────────────────────────────────────────
 
 model Lender {
-  id                   String   @id @default(cuid())
-  name                 String
-  contactEmail         String?
-  contactPhone         String?
-  contactName          String?
+  id           String  @id @default(cuid())
+  name         String
+  contactEmail String?
+  contactPhone String?
+  contactName  String?
 
   // Eligibility gates
-  minCreditScore       Int      @default(600)
-  maxLTV               Float    @default(80)
-  maxGDS               Float    @default(39)
-  maxTDS               Float    @default(44)
-  supportedProvinces   String[] @default(["ON"])
-  propertyTypes        String[] @default(["residential"])
+  minCreditScore     Int      @default(600)
+  maxLTV             Float    @default(80)
+  maxGDS             Float    @default(39)
+  maxTDS             Float    @default(44)
+  supportedProvinces String[] @default(["ON"])
+  propertyTypes      String[] @default(["residential"])
 
   // Product details
-  positionTypes        String[] @default(["1st"])        // 1st, 2nd, 3rd, bridge
-  productCategories    String[] @default(["residential"]) // residential, commercial, land, construction, bridge
-  minLoan              Float    @default(50000)
-  maxLoan              Float    @default(5000000)
-  termMin              Int      @default(6)              // months
-  termMax              Int      @default(360)            // months
+  positionTypes     String[] @default(["1st"]) // 1st, 2nd, 3rd, bridge
+  productCategories String[] @default(["residential"]) // residential, commercial, land, construction, bridge
+  minLoan           Float    @default(50000)
+  maxLoan           Float    @default(5000000)
+  termMin           Int      @default(6) // months
+  termMax           Int      @default(360) // months
 
   // Pricing
-  pricingPremium       Float    @default(0)
-  baseRate             Float    @default(5.5)
-  lenderFees           Float    @default(0)              // % fee
+  pricingPremium Float @default(0)
+  baseRate       Float @default(5.5)
+  lenderFees     Float @default(0) // % fee
 
   // Scoring attributes
-  speed                Int      @default(5)
-  exceptionsTolerance  Int      @default(3)
-  appetite             Int      @default(5)
+  speed               Int @default(5)
+  exceptionsTolerance Int @default(3)
+  appetite            Int @default(5)
 
   // Capital tracking
-  capitalAvailable     Float    @default(0)
-  capitalCommitted     Float    @default(0)
+  capitalAvailable Float @default(0)
+  capitalCommitted Float @default(0)
 
   // Notes & docs
   notes                String?
   underwritingNotes    String?
   documentRequirements String[] @default([])
 
-  status               String   @default("active")
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-  deals                Deal[]
+  status       String        @default("active")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  deals        Deal[]
+  users        User[]
+  capitalPools CapitalPool[]
+}
+
+// ─── Capital & Investors ────────────────────────────────────────────────────────
+
+model CapitalPool {
+  id              String @id @default(cuid())
+  name            String
+  totalAmount     Float
+  availableAmount Float
+  minInvestment   Float  @default(50000)
+  targetYield     Float  @default(8.0)
+  status          String @default("active") // active | closed
+
+  lenderId String
+  lender   Lender @relation(fields: [lenderId], references: [id])
+
+  investments Investment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Investment {
+  id     String @id @default(cuid())
+  amount Float
+  yield  Float
+  status String @default("active") // active | withdrawn
+
+  poolId String
+  pool   CapitalPool @relation(fields: [poolId], references: [id])
+  userId String
+  user   User        @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ─── Deal ───────────────────────────────────────────────────────────────────────
 
 model Deal {
-  id              String    @id @default(cuid())
-  borrowerId      String
-  lenderId        String?
-  stage           String    @default("intake") // intake | in_review | matched | committed | funded | declined | archived
-  priority        String    @default("normal") // low | normal | high | urgent
+  id         String  @id @default(cuid())
+  borrowerId String
+  lenderId   String?
+  stage      String  @default("intake") // intake | in_review | matched | committed | funded | declined | archived
+  priority   String  @default("normal") // low | normal | high | urgent
 
   // Property
   propertyAddress String?
-  propertyType    String    @default("residential")
-  propertyValue   Float     @default(0)
+  propertyType    String  @default("residential")
+  propertyValue   Float   @default(0)
 
   // Loan
-  loanAmount      Float     @default(0)
-  interestRate    Float?
-  termMonths      Int       @default(300)
-  amortMonths     Int       @default(300)
-  position        String    @default("1st") // 1st | 2nd | 3rd | bridge
-  loanPurpose     String    @default("purchase") // purchase | refinance | renewal | equity_takeout | bridge | construction
-  occupancyType   String    @default("owner_occupied") // owner_occupied | rental | investment | commercial
-  exitStrategy    String?
+  loanAmount    Float   @default(0)
+  interestRate  Float?
+  termMonths    Int     @default(300)
+  amortMonths   Int     @default(300)
+  position      String  @default("1st") // 1st | 2nd | 3rd | bridge
+  loanPurpose   String  @default("purchase") // purchase | refinance | renewal | equity_takeout | bridge | construction
+  occupancyType String  @default("owner_occupied") // owner_occupied | rental | investment | commercial
+  exitStrategy  String?
 
   // Ratios
-  ltv             Float?
-  gds             Float?
-  tds             Float?
-  monthlyPayment  Float?
-  matchScore      Int?
+  ltv            Float?
+  gds            Float?
+  tds            Float?
+  monthlyPayment Float?
+  matchScore     Int?
 
   // Fees & Commission
-  brokerFee             Float?
-  lenderFee             Float?
-  totalRevenue          Float?
-  agentCommissionSplit  Float    @default(50)  // %
-  netBrokerageRevenue   Float?
+  brokerFee            Float?
+  lenderFee            Float?
+  totalRevenue         Float?
+  agentCommissionSplit Float  @default(50) // %
+  netBrokerageRevenue  Float?
 
   // Dates
-  closingDate     DateTime?
-  fundingDate     DateTime?
-  notes           String?
+  closingDate DateTime?
+  fundingDate DateTime?
+  notes       String?
 
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  borrower        Borrower  @relation(fields: [borrowerId], references: [id], onDelete: Cascade)
-  lender          Lender?   @relation(fields: [lenderId], references: [id])
-  docRequests     DocRequest[]
-  stageHistory    DealStageHistory[]
-  scenarios       Scenario[]
-  conditions      DealCondition[]
+  borrower     Borrower           @relation(fields: [borrowerId], references: [id], onDelete: Cascade)
+  lender       Lender?            @relation(fields: [lenderId], references: [id])
+  tasks        Task[]
+  docRequests  DocRequest[]
+  stageHistory DealStageHistory[]
+  scenarios    Scenario[]
+  conditions   DealCondition[]
+  loan         Loan?
 }
 
 // ─── Deal Stage History ─────────────────────────────────────────────────────────
@@ -168,7 +211,7 @@ model DealStageHistory {
   changedBy String   @default("system")
   changedAt DateTime @default(now())
 
-  deal      Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  deal Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
 }
 
 // ─── Scenario ───────────────────────────────────────────────────────────────────
@@ -176,7 +219,7 @@ model DealStageHistory {
 model Scenario {
   id                  String   @id @default(cuid())
   borrowerId          String
-  dealId              String?
+  dealId              String
   name                String
   type                String   @default("purchase")
   inputs              Json     @default("{}")
@@ -186,48 +229,98 @@ model Scenario {
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
-  borrower            Borrower @relation(fields: [borrowerId], references: [id], onDelete: Cascade)
-  deal                Deal?    @relation(fields: [dealId], references: [id])
+  borrower Borrower @relation(fields: [borrowerId], references: [id], onDelete: Cascade)
+  deal     Deal     @relation(fields: [dealId], references: [id])
+}
+
+// ─── Loan Tracking & Management ──────────────────────────────────────────────────
+
+model Loan {
+  id     String @id @default(cuid())
+  dealId String @unique
+  deal   Deal   @relation(fields: [dealId], references: [id])
+
+  status           String   @default("active") // active | paid_off | default | arrears
+  fundedDate       DateTime
+  maturityDate     DateTime
+  principalBalance Float
+  interestRate     Float
+  interestType     String   @default("fixed") // fixed | variable
+
+  payments LoanPayment[]
+  fees     LoanFee[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LoanPayment {
+  id     String @id @default(cuid())
+  loanId String
+  loan   Loan   @relation(fields: [loanId], references: [id])
+
+  amount Float
+  date   DateTime
+  type   String   @default("regular") // regular | extra_principal | payoff
+  status String   @default("cleared") // pending | cleared | bounced
+
+  principalPortion Float?
+  interestPortion  Float?
+
+  createdAt DateTime @default(now())
+}
+
+model LoanFee {
+  id     String @id @default(cuid())
+  loanId String
+  loan   Loan   @relation(fields: [loanId], references: [id])
+
+  amount      Float
+  description String
+  type        String // late_fee | nsf_fee | discharge_fee | extension_fee
+  isPaid      Boolean @default(false)
+
+  createdAt DateTime @default(now())
 }
 
 // ─── DocVault ───────────────────────────────────────────────────────────────────
 
 model DocRequest {
-  id           String         @id @default(cuid())
-  borrowerId   String
-  dealId       String?
-  docType      String
-  category     String         @default("general") // income | identity | property | legal | general
-  status       String         @default("requested") // requested | uploaded | verified | rejected | expired
-  expiresAt    DateTime?
-  notes        String?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  id         String    @id @default(cuid())
+  borrowerId String
+  dealId     String?
+  docType    String
+  category   String    @default("general") // income | identity | property | legal | general
+  status     String    @default("requested") // requested | uploaded | verified | rejected | expired
+  expiresAt  DateTime?
+  notes      String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
-  borrower     Borrower       @relation(fields: [borrowerId], references: [id], onDelete: Cascade)
-  deal         Deal?          @relation(fields: [dealId], references: [id])
-  files        DocumentFile[]
+  borrower       Borrower        @relation(fields: [borrowerId], references: [id], onDelete: Cascade)
+  deal           Deal?           @relation(fields: [dealId], references: [id])
+  files          DocumentFile[]
   dealConditions DealCondition[]
 }
 
 model DocumentFile {
-  id           String     @id @default(cuid())
+  id           String   @id @default(cuid())
   docRequestId String
   filename     String
   path         String
-  mimeType     String     @default("application/octet-stream")
-  fileSize     Int        @default(0)
-  version      Int        @default(1)
-  uploadedAt   DateTime   @default(now())
+  mimeType     String   @default("application/octet-stream")
+  fileSize     Int      @default(0)
+  version      Int      @default(1)
+  uploadedAt   DateTime @default(now())
 
-  docRequest   DocRequest @relation(fields: [docRequestId], references: [id], onDelete: Cascade)
+  docRequest DocRequest @relation(fields: [docRequestId], references: [id], onDelete: Cascade)
 }
 
 // ─── Notes (polymorphic) ────────────────────────────────────────────────────────
 
 model Note {
   id         String   @id @default(cuid())
-  entityType String   // Borrower | Deal | Lender
+  entityType String // Borrower | Deal | Lender
   entityId   String
   content    String
   createdBy  String   @default("system")
@@ -239,34 +332,36 @@ model Note {
 // ─── Deal Conditions ────────────────────────────────────────────────────────────
 
 model DealCondition {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   dealId       String
   description  String
-  status       String   @default("pending") // pending | met | waived
+  status       String    @default("pending") // pending | met | waived
   clearedAt    DateTime?
   docRequestId String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  deal         Deal        @relation(fields: [dealId], references: [id], onDelete: Cascade)
-  docRequest   DocRequest? @relation(fields: [docRequestId], references: [id], onDelete: SetNull)
+  deal       Deal        @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  docRequest DocRequest? @relation(fields: [docRequestId], references: [id], onDelete: SetNull)
 }
 
 // ─── Task ───────────────────────────────────────────────────────────────────────
 
 model Task {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   title        String
   description  String?
   dueDate      DateTime?
-  status       String   @default("pending") // pending | completed
+  status       String    @default("pending") // pending | completed
   assignedToId String?
-  entityType   String?  // Deal | Borrower | Lender
+  entityType   String? // Deal | Borrower | Lender
   entityId     String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  assignedTo   User?    @relation(fields: [assignedToId], references: [id])
+  assignedTo User?   @relation(fields: [assignedToId], references: [id])
+  Deal       Deal?   @relation(fields: [dealId], references: [id])
+  dealId     String?
 
   @@index([entityType, entityId])
 }
@@ -283,19 +378,34 @@ model AuditLog {
   timestamp DateTime @default(now())
 }
 
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      String   @default("info") // info | success | warning | error | task | deal
+  read      Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId, read])
+}
+
 // ─── Brokerage Settings (singleton) ─────────────────────────────────────────────
 
 model BrokerageSettings {
-  id               String  @id @default("default")
-  brokerageName    String  @default("BrokerBox Financial Group")
-  licenseNumber    String  @default("")
-  principalBroker  String  @default("")
-  officeAddress    String  @default("")
-  officePhone      String  @default("")
-  officeEmail      String  @default("")
-  defaultBrokerFee Float   @default(1.0)  // %
-  defaultLenderFee Float   @default(0.5)  // %
-  defaultTermMonths Int    @default(12)
-  defaultAmortMonths Int   @default(300)
-  defaultInterestRate Float @default(5.5)
+  id                  String @id @default("default")
+  brokerageName       String @default("BrokerBox Financial Group")
+  licenseNumber       String @default("")
+  principalBroker     String @default("")
+  officeAddress       String @default("")
+  officePhone         String @default("")
+  officeEmail         String @default("")
+  defaultBrokerFee    Float  @default(1.0) // %
+  defaultLenderFee    Float  @default(0.5) // %
+  defaultTermMonths   Int    @default(12)
+  defaultAmortMonths  Int    @default(300)
+  defaultInterestRate Float  @default(5.5)
 }

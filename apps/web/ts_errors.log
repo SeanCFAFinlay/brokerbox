@@ -1,0 +1,13 @@
+src/app/api/deals/[id]/route.ts(59,32): error TS2345: Argument of type '"UPDATE" | "STAGE_CHANGE"' is not assignable to parameter of type '"CREATE" | "UPDATE" | "DELETE"'.
+  Type '"STAGE_CHANGE"' is not assignable to type '"CREATE" | "UPDATE" | "DELETE"'.
+src/app/api/settings/route.ts(9,5): error TS2578: Unused '@ts-expect-error' directive.
+src/app/api/settings/route.ts(12,9): error TS2578: Unused '@ts-expect-error' directive.
+src/app/api/settings/route.ts(22,5): error TS2578: Unused '@ts-expect-error' directive.
+src/app/api/settings/route.ts(30,5): error TS2578: Unused '@ts-expect-error' directive.
+src/app/deals/[id]/page.tsx(53,49): error TS2345: Argument of type '{ propertyValue: number; loanAmount: number; propertyType: string; ltv: number; gds: number; tds: number; }' is not assignable to parameter of type 'DealData'.
+  Type '{ propertyValue: number; loanAmount: number; propertyType: string; ltv: number; gds: number; tds: number; }' is missing the following properties from type 'DealData': position, loanPurpose, termMonths
+src/app/deals/[id]/page.tsx(165,73): error TS2339: Property 'lenderName' does not exist on type '{ name: string; type: string; id: string; createdAt: Date; updatedAt: Date; borrowerId: string; dealId: string; inputs: JsonValue; results: JsonValue; isPreferred: boolean; recommendationNotes: string; }'.
+src/app/deals/[id]/page.tsx(166,45): error TS2339: Property 'rate' does not exist on type '{ name: string; type: string; id: string; createdAt: Date; updatedAt: Date; borrowerId: string; dealId: string; inputs: JsonValue; results: JsonValue; isPreferred: boolean; recommendationNotes: string; }'.
+src/app/deals/[id]/page.tsx(167,45): error TS2339: Property 'termMonths' does not exist on type '{ name: string; type: string; id: string; createdAt: Date; updatedAt: Date; borrowerId: string; dealId: string; inputs: JsonValue; results: JsonValue; isPreferred: boolean; recommendationNotes: string; }'.
+src/app/deals/[id]/page.tsx(168,46): error TS2339: Property 'monthlyPayment' does not exist on type '{ name: string; type: string; id: string; createdAt: Date; updatedAt: Date; borrowerId: string; dealId: string; inputs: JsonValue; results: JsonValue; isPreferred: boolean; recommendationNotes: string; }'.
+src/app/manifest.ts(14,68): error TS2820: Type '"any maskable"' is not assignable to type '"any" | "maskable" | "monochrome"'. Did you mean '"maskable"'?

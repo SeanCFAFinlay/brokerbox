@@ -1,0 +1,2 @@
+src/app/api/deals/[id]/loan/route.ts(34,49): error TS2322: Type 'string' is not assignable to type '{ old: unknown; new: unknown; }'.
+src/app/api/deals/[id]/loan/route.ts(35,44): error TS2739: Type '{ key: string; old: string; new: string; }[]' is missing the following properties from type '{ old: unknown; new: unknown; }': old, new

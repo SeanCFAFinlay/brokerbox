@@ -7,7 +7,9 @@ export interface BorrowerData {
     creditScore: number;
     income: number;
     province: string;
+    city: string; // added city for rural/urban analysis
     liabilities: number;
+    selfEmployed?: boolean; // added self-employed flag
 }
 
 export interface DealData {
@@ -42,6 +44,8 @@ export interface LenderData {
     appetite: number;
     pricingPremium: number;
     documentRequirements: string[];
+    allowsSelfEmployed: boolean; // added check
+    ruralMaxLTV: number; // specific rule for rural properties
 }
 
 export interface MatchResult {
@@ -56,12 +60,12 @@ export interface MatchResult {
 }
 
 const WEIGHTS = {
-    rateCompetitiveness: 0.25,
+    rateCompetitiveness: 0.30,
     policyFit: 0.20,
+    flexibility: 0.15,
     speed: 0.15,
     brokerPreference: 0.10,
-    exceptionsTolerance: 0.15,
-    appetite: 0.15,
+    appetite: 0.10,
 };
 
 export function runMatch(borrower: BorrowerData, deal: DealData, lenders: LenderData[]): MatchResult[] {
@@ -106,7 +110,31 @@ export function runMatch(borrower: BorrowerData, deal: DealData, lenders: Lender
             failures.push(`Position ${deal.position} not supported`);
         }
 
-        const passed = failures.length === 0;
+        // Granular Gating - Rural properties
+        const isRural = borrower.city?.toLowerCase().includes('rural') || false; // Simple heuristic for now
+        if (isRural && (deal.ltv > (lender.ruralMaxLTV || lender.maxLTV))) {
+            failures.push(`Rural LTV ${(deal.ltv || 0).toFixed(1)}% exceeds specific rural max ${lender.ruralMaxLTV || lender.maxLTV}%`);
+        }
+
+        // Granular Gating - Self Employed
+        if (borrower.selfEmployed && !lender.allowsSelfEmployed) {
+            failures.push(`Lender does not permit Self-Employed borrowers`);
+        }
+
+        // Lenient Credit check if low LTV and high exception tolerance
+        if (borrower.creditScore < lender.minCreditScore) {
+            const ltvBuffer = lender.maxLTV - deal.ltv;
+            if (lender.exceptionsTolerance > 7 && ltvBuffer > 15) {
+                // Exception logic: they waive the credit score rule if LTV is extremely low
+                const idx = failures.indexOf(`Credit score ${borrower.creditScore} < min ${lender.minCreditScore}`);
+                if (idx > -1) {
+                    failures.splice(idx, 1);
+                    failures.push(`Credit score exception granted (Low LTV & High Tolerance)`);
+                }
+            }
+        }
+
+        const passed = failures.length === 0 || failures.every(f => f.includes('exception granted'));
 
         // Scoring (even if failed gating, so broker can see how close)
         const breakdown: { factor: string; score: number; weight: number; weighted: number }[] = [];
@@ -131,9 +159,10 @@ export function runMatch(borrower: BorrowerData, deal: DealData, lenders: Lender
         const prefScore = 70;
         breakdown.push({ factor: 'Broker Preference', score: prefScore, weight: WEIGHTS.brokerPreference, weighted: prefScore * WEIGHTS.brokerPreference });
 
-        // Exceptions tolerance
-        const exceptScore = (lender.exceptionsTolerance / 10) * 100;
-        breakdown.push({ factor: 'Exceptions Tolerance', score: Math.round(exceptScore), weight: WEIGHTS.exceptionsTolerance, weighted: exceptScore * WEIGHTS.exceptionsTolerance });
+        // Flexibility (Exceptions Tolerance + Self Employed Allowance)
+        let flexScore = (lender.exceptionsTolerance / 10) * 100;
+        if (lender.allowsSelfEmployed) flexScore = Math.min(100, flexScore + 10);
+        breakdown.push({ factor: 'Underwriting Flexibility', score: Math.round(flexScore), weight: WEIGHTS.flexibility, weighted: flexScore * WEIGHTS.flexibility });
 
         // Appetite
         const appetiteScore = (lender.appetite / 10) * 100;

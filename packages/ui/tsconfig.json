@@ -10,7 +10,9 @@
     "forceConsistentCasingInFileNames": true,
     "outDir": "dist",
     "declaration": true,
-    "declarationMap": true
+    "declarationMap": true,
+    "types": [],
+    "typeRoots": []
   },
   "include": [
     "src/**/*"

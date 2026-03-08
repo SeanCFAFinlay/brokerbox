@@ -56,7 +56,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
             diff[key] = { old: (old as Record<string, unknown>)[key], new: body[key] };
         }
     }
-    await logAudit('Deal', id, body.stage && body.stage !== old.stage ? 'STAGE_CHANGE' : 'UPDATE', diff);
+    await logAudit('Deal', id, 'UPDATE', diff);
 
     return NextResponse.json(deal);
 }

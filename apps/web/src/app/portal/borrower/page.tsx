@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma';
 import Link from 'next/link';
 import s from '@/styles/shared.module.css';
+import FileUpload from '@/components/docvault/FileUpload';
 
 export const dynamic = 'force-dynamic';
 
@@ -101,7 +102,11 @@ export default async function BorrowerPortalDashboard() {
                                             <div style={{ fontWeight: 600, fontSize: 14 }}>{dr.docType}</div>
                                             <div style={{ fontSize: 11, color: 'var(--bb-muted)', textTransform: 'uppercase' }}>{dr.category}</div>
                                         </div>
-                                        <button className={`${s.btn} ${s.btnSecondary} ${s.btnSmall}`}>Upload</button>
+                                        <FileUpload
+                                            borrowerId={borrower.id}
+                                            docType={dr.docType}
+                                            category={dr.category}
+                                        />
                                     </div>
                                 ))}
                             </div>

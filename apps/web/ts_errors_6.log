@@ -1,0 +1,1 @@
+src/app/api/deals/[id]/loan/route.ts(36,49): error TS2322: Type 'string' is not assignable to type '{ old: unknown; new: unknown; }'.

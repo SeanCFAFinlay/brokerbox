@@ -76,9 +76,15 @@ export default async function BorrowerDetailPage({ params }: { params: Promise<{
                             {borrower.docRequests.map(dr => {
                                 const statusColor = dr.status === 'verified' ? s.pillGreen : dr.status === 'uploaded' ? s.pillBlue : dr.status === 'rejected' ? s.pillRed : s.pillYellow;
                                 return (
-                                    <div key={dr.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
-                                        <span>{dr.docType}</span>
-                                        <span className={`${s.pill} ${statusColor}`}>{dr.status}</span>
+                                    <div key={dr.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, paddingBottom: 8, borderBottom: '1px solid var(--bb-border)' }}>
+                                        <div>
+                                            <div style={{ fontWeight: 600 }}>{dr.docType}</div>
+                                            <div style={{ fontSize: 11, color: 'var(--bb-muted)', textTransform: 'uppercase' }}>{dr.category || 'GENERAL'}</div>
+                                        </div>
+                                        <div style={{ textAlign: 'right' }}>
+                                            <span className={`${s.pill} ${statusColor}`}>{dr.status}</span>
+                                            {dr.expiresAt && <div style={{ fontSize: 11, marginTop: 4, color: new Date(dr.expiresAt) < new Date() ? 'var(--bb-danger)' : 'var(--bb-warning)' }}>Exp: {new Date(dr.expiresAt).toLocaleDateString()}</div>}
+                                        </div>
                                     </div>
                                 );
                             })}

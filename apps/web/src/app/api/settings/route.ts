@@ -6,10 +6,8 @@ import prisma from '@/lib/prisma';
 import { logAudit } from '@/lib/audit';
 
 export async function GET() {
-    // @ts-expect-error Prisma Client may not immediately reflect schema changes
     let settings = await prisma.brokerageSettings.findUnique({ where: { id: 'default' } });
     if (!settings) {
-        // @ts-expect-error
         settings = await prisma.brokerageSettings.create({
             data: { id: 'default', brokerageName: 'BrokerBox Financial Group' }
         });
@@ -19,7 +17,6 @@ export async function GET() {
 
 export async function PUT(req: NextRequest) {
     const body = await req.json();
-    // @ts-expect-error
     const old = await prisma.brokerageSettings.findUnique({ where: { id: 'default' } });
 
     // Convert numerical inputs
@@ -27,7 +24,6 @@ export async function PUT(req: NextRequest) {
         if (body[k] !== undefined) body[k] = Number(body[k]);
     });
 
-    // @ts-expect-error
     const settings = await prisma.brokerageSettings.upsert({
         where: { id: 'default' },
         update: body,

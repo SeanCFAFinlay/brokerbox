@@ -4,7 +4,7 @@ import s from '@/styles/shared.module.css';
 
 interface Borrower { id: string; firstName: string; lastName: string; }
 interface Deal { id: string; propertyAddress: string; loanAmount: number; stage: string; }
-interface DocReq { id: string; docType: string; status: string; borrowerId: string; dealId: string | null; notes: string | null; createdAt: string; files: { id: string; filename: string; version: number; uploadedAt: string }[]; deal?: { propertyAddress: string }; }
+interface DocReq { id: string; docType: string; category: string; status: string; expiresAt: string | null; borrowerId: string; dealId: string | null; notes: string | null; createdAt: string; files: { id: string; filename: string; version: number; uploadedAt: string }[]; deal?: { propertyAddress: string }; }
 
 export default function DocVaultPage() {
     const [borrowers, setBorrowers] = useState<Borrower[]>([]);
@@ -16,6 +16,7 @@ export default function DocVaultPage() {
     // Filters
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
+    const [categoryFilter, setCategoryFilter] = useState('all');
 
     // Create Modal state
     const [selectedBorrower, setSelectedBorrower] = useState('');
@@ -52,6 +53,8 @@ export default function DocVaultPage() {
         };
         const dealId = fd.get('dealId');
         if (dealId) payload.dealId = dealId;
+        const exp = fd.get('expiresAt') as string;
+        if (exp) payload.expiresAt = new Date(exp).toISOString();
 
         const res = await fetch('/api/docvault', {
             method: 'POST',
@@ -95,6 +98,9 @@ export default function DocVaultPage() {
         if (statusFilter !== 'all') {
             result = result.filter(d => d.status === statusFilter);
         }
+        if (categoryFilter !== 'all') {
+            result = result.filter(d => d.category === categoryFilter);
+        }
         if (search) {
             const q = search.toLowerCase();
             result = result.filter(d => {
@@ -104,7 +110,7 @@ export default function DocVaultPage() {
             });
         }
         return result;
-    }, [docs, statusFilter, search, borrowers]);
+    }, [docs, statusFilter, categoryFilter, search, borrowers]);
 
     const statusColor = (st: string) => st === 'verified' ? s.pillGreen : st === 'uploaded' ? s.pillBlue : st === 'rejected' ? s.pillRed : s.pillYellow;
 
@@ -131,6 +137,14 @@ export default function DocVaultPage() {
             {/* Filters */}
             <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
                 <input className={s.formInput} placeholder="Search borrower or document..." value={search} onChange={e => setSearch(e.target.value)} style={{ width: 300 }} />
+                <select className={s.formInput} value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} style={{ width: 150 }}>
+                    <option value="all">All Categories</option>
+                    <option value="income">Income</option>
+                    <option value="identity">Identity</option>
+                    <option value="property">Property</option>
+                    <option value="legal">Legal</option>
+                    <option value="general">General</option>
+                </select>
                 <select className={s.formInput} value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={{ width: 150 }}>
                     <option value="all">All Statuses</option>
                     <option value="requested">Requested</option>
@@ -150,7 +164,9 @@ export default function DocVaultPage() {
                                 <tr key={d.id}>
                                     <td>
                                         <div style={{ fontWeight: 600 }}>{d.docType}</div>
-                                        {d.notes && <div style={{ fontSize: 12, color: 'var(--bb-muted)' }}>{d.notes}</div>}
+                                        <div style={{ fontSize: 11, color: 'var(--bb-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{d.category || 'GENERAL'}</div>
+                                        {d.notes && <div style={{ fontSize: 12, color: 'var(--bb-muted)', marginTop: 4 }}>{d.notes}</div>}
+                                        {d.expiresAt && <div style={{ fontSize: 12, marginTop: 4, color: new Date(d.expiresAt) < new Date() ? 'var(--bb-danger)' : 'var(--bb-warning)' }}>⏳ Expires: {new Date(d.expiresAt).toLocaleDateString()}</div>}
                                     </td>
                                     <td>
                                         <div style={{ fontWeight: 600, color: 'var(--bb-accent)' }}>{borrower ? `${borrower.firstName} ${borrower.lastName}` : d.borrowerId.slice(-6)}</div>
@@ -225,9 +241,15 @@ export default function DocVaultPage() {
                                     </select>
                                 </div>
                             </div>
-                            <div className={s.formGroup}>
-                                <label className={s.formLabel}>Request Notes</label>
-                                <input name="notes" placeholder="e.g. Please provide last 30 days..." className={s.formInput} />
+                            <div className={s.grid2}>
+                                <div className={s.formGroup}>
+                                    <label className={s.formLabel}>Request Notes</label>
+                                    <input name="notes" placeholder="e.g. Please provide last 30 days..." className={s.formInput} />
+                                </div>
+                                <div className={s.formGroup}>
+                                    <label className={s.formLabel}>Expiry Date (Optional)</label>
+                                    <input type="date" name="expiresAt" className={s.formInput} />
+                                </div>
                             </div>
                             <div className={s.modalActions} style={{ marginTop: 24 }}>
                                 <button type="button" className={`${s.btn} ${s.btnSecondary}`} onClick={() => { setCreateOpen(false); setSelectedBorrower(''); }}>Cancel</button>
