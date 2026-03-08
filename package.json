@@ -20,8 +20,10 @@
         "@types/node": "^20.11.0",
         "@types/react-native": "^0.73.0",
         "prisma": "^5.22.0",
+        "@prisma/client": "^5.22.0",
         "turbo": "^2.1.1",
-        "typescript": "^5.3.3"
+        "typescript": "^5.3.3",
+        "cross-env": "^7.0.3"
     },
     "pnpm": {
         "overrides": {
@@ -34,8 +36,5 @@
             "prisma",
             "@prisma/*"
         ]
-    },
-    "dependencies": {
-        "cross-env": "^10.1.0"
     }
 }
