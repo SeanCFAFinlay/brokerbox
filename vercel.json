@@ -1,5 +1,5 @@
 {
   "framework": "nextjs",
   "installCommand": "pnpm install --no-frozen-lockfile",
-  "buildCommand": "pnpm --dir apps/web build && rm -rf .next && mkdir -p .next && cp -r apps/web/.next/. .next/"
+  "buildCommand": "pnpm --dir apps/web build"
 }
