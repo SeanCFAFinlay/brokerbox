@@ -81,6 +81,24 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         await logAudit('Loan', result.id, 'CREATE', undefined, { transactional: true });
         await logAudit('Deal', id, 'STATUS_CHANGE', { stage: { old: deal.stage as string, new: 'funded' } });
 
+        // Add to stage history
+        await prisma.dealStageHistory.create({
+            data: {
+                dealId: id,
+                fromStage: deal.stage,
+                toStage: 'funded',
+                changedBy: 'broker'
+            }
+        });
+
+        // Auto-sync to Outlook if enabled
+        try {
+            const { syncToOutlook } = await import('@/lib/outlook');
+            await syncToOutlook('demo');
+        } catch (e) {
+            console.error('Outlook sync failed:', e);
+        }
+
         return NextResponse.json(result, { status: 201 });
     } catch (error: any) {
         console.error('Funding Transaction Failed:', error);

@@ -1,7 +1,7 @@
 import { StyleSheet } from 'react-native';
 
-import EditScreenInfo from '@/components/EditScreenInfo';
-import { Text, View } from '@/components/Themed';
+import { EditScreenInfo } from '@brokerbox/ui';
+import { Text, View } from '@brokerbox/ui';
 
 export default function TabTwoScreen() {
   return (

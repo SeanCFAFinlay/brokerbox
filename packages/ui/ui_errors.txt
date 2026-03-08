@@ -1,0 +1,4 @@
+src/components/expo/EditScreenInfo.tsx(8,20): error TS2307: Cannot find module '@/constants/Colors' or its corresponding type declarations.
+src/components/expo/Themed.tsx(7,32): error TS2307: Cannot find module './useColorScheme' or its corresponding type declarations.
+src/components/expo/Themed.tsx(9,20): error TS2307: Cannot find module '@/constants/Colors' or its corresponding type declarations.
+src/components/expo/Themed.tsx(24,26): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ light?: string | undefined; dark?: string | undefined; }'.

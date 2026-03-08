@@ -1,49 +1,35 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
-
-import { COLORS } from '../constants';
+import { Button as PaperButton } from 'react-native-paper';
 
 interface ButtonProps {
-    title: string;
+    mode?: 'text' | 'outlined' | 'contained' | 'elevated' | 'contained-tonal';
     onPress: () => void;
-    variant?: 'primary' | 'secondary' | 'danger';
-    outline?: boolean;
+    children: React.ReactNode;
+    loading?: boolean;
+    disabled?: boolean;
+    icon?: string;
+    style?: any;
 }
 
-export const Button: React.FC<ButtonProps> = ({ title, onPress, variant = 'primary', outline }) => {
-    const getBgColor = () => {
-        if (outline) return 'transparent';
-        if (variant === 'secondary') return COLORS.surface;
-        if (variant === 'danger') return COLORS.error;
-        return COLORS.primary;
-    };
-
+export const Button = ({
+    mode = 'contained',
+    onPress,
+    children,
+    loading,
+    disabled,
+    icon,
+    style,
+}: ButtonProps) => {
     return (
-        <TouchableOpacity
-            style={[
-                styles.button,
-                { backgroundColor: getBgColor() },
-                outline && { borderWidth: 1, borderColor: variant === 'danger' ? COLORS.error : COLORS.primary }
-            ]}
+        <PaperButton
+            mode={mode}
             onPress={onPress}
+            loading={loading}
+            disabled={disabled}
+            icon={icon}
+            style={[{ borderRadius: 8 }, style]}
         >
-            <Text style={[styles.text, outline && { color: variant === 'danger' ? COLORS.error : COLORS.primary }]}>{title}</Text>
-        </TouchableOpacity>
+            {children}
+        </PaperButton>
     );
 };
-
-const styles = StyleSheet.create({
-    button: {
-        paddingVertical: 14,
-        paddingHorizontal: 28,
-        borderRadius: 12,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    text: {
-        color: '#FFFFFF',
-        fontSize: 16,
-        fontWeight: '700',
-        letterSpacing: 0.5,
-    },
-});

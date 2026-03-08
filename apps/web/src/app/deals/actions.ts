@@ -36,4 +36,12 @@ export async function updateDealStage(dealId: string, newStage: string) {
 
     revalidatePath('/deals');
     revalidatePath('/');
+
+    // Auto-sync to Outlook if enabled
+    try {
+        const { syncToOutlook } = await import('@/lib/outlook');
+        await syncToOutlook('demo'); // Defaulting to demo for now, should use authenticated user
+    } catch (e) {
+        console.error('Outlook sync failed:', e);
+    }
 }

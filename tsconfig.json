@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "target": "ESNext",
-        "module": "CommonJS",
+        "module": "NodeNext",
         "lib": [
             "ESNext"
         ],
@@ -9,7 +9,19 @@
         "esModuleInterop": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
-        "moduleResolution": "node",
+        "baseUrl": ".",
+        "moduleResolution": "NodeNext",
+        "paths": {
+            "@brokerbox/database": [
+                "./packages/database/src/index.ts"
+            ],
+            "@brokerbox/ui": [
+                "./packages/ui/src/index.ts"
+            ],
+            "@brokerbox/utils": [
+                "./packages/utils/src/index.ts"
+            ]
+        },
         "types": [
             "node"
         ]

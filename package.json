@@ -11,14 +11,22 @@
         "db:migrate": "pnpm -C apps/web db:migrate",
         "db:push": "pnpm -C apps/web db:push",
         "db:seed": "pnpm -C apps/web db:seed",
-        "api:dev": "pnpm -C packages/api dev",
-        "api:build": "pnpm -C packages/api build"
+        "api:dev": "pnpm -C apps/api dev",
+        "api:build": "pnpm -C apps/api build"
     },
     "devDependencies": {
         "@expo/cli": "^55.0.14",
         "@types/minimatch": "^6.0.0",
         "@types/node": "^20.11.0",
         "@types/react-native": "^0.73.0",
-        "typescript": "^5.3.3"
+        "typescript": "^5.3.3",
+        "turbo": "^2.1.1",
+        "prisma": "^5.22.0"
+    },
+    "pnpm": {
+        "overrides": {
+            "@types/react": "^18.2.0",
+            "@types/react-dom": "^18.2.0"
+        }
     }
 }

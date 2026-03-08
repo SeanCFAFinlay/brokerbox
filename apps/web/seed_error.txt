@@ -1,0 +1,84 @@
+≡ƒî▒ Seeding BrokerBox database...
+  Γ£ô brokerage settings
+PrismaClientValidationError: 
+Invalid `prisma.lender.create()` invocation in
+C:\Users\sean\BBBUILDOUT\brokerbox\apps\web\prisma\seed.ts:79:44
+
+  76 // Lenders
+  77 const lenderRecords = [];
+  78 for (const l of LENDERS) {
+ΓåÆ 79     const lender = await prisma.lender.create({
+           data: {
+             name: "TD Canada Trust",
+             minCreditScore: 680,
+             maxLTV: 80,
+             maxGDS: 39,
+             maxTDS: 44,
+             supportedProvinces: [
+               "ON",
+               "BC",
+               "AB",
+               "QC",
+               "MB",
+               "SK",
+               "NS",
+               "NB"
+             ],
+             propertyTypes: [
+               "residential",
+               "condo"
+             ],
+             positionTypes: [
+               "1st"
+             ],
+             productCategories: [
+               "residential"
+             ],
+             minLoan: 100000,
+             maxLoan: 3000000,
+             termMin: 12,
+             termMax: 360,
+             capitalAvailable: 50000000,
+             capitalCommitted: 12000000,
+             baseRate: 5.04,
+             speed: 7,
+             exceptionsTolerance: 3,
+             appetite: 8,
+             pricingPremium: 0,
+             lenderFees: 0,
+             documentRequirements: [
+               "T4 Slips",
+               "Notice of Assessment",
+               "Pay Stubs",
+               "Letter of Employment",
+               "Bank Statements",
+               "Photo ID"
+             ],
+             allowsSelfEmployed: true,
+             ~~~~~~~~~~~~~~~~~~
+             ruralMaxLTV: 65,
+         ?   id?: String,
+         ?   contactEmail?: String | Null,
+         ?   contactPhone?: String | Null,
+         ?   contactName?: String | Null,
+         ?   notes?: String | Null,
+         ?   underwritingNotes?: String | Null,
+         ?   status?: String,
+         ?   createdAt?: DateTime,
+         ?   updatedAt?: DateTime,
+         ?   deals?: DealCreateNestedManyWithoutLenderInput,
+         ?   users?: UserCreateNestedManyWithoutLenderInput,
+         ?   capitalPools?: CapitalPoolCreateNestedManyWithoutLenderInput,
+         ?   lenderMatchSnapshots?: LenderMatchSnapshotCreateNestedManyWithoutLenderInput
+           }
+         })
+
+Unknown argument `allowsSelfEmployed`. Available options are marked with ?.
+    at wn (C:\Users\sean\BBBUILDOUT\brokerbox\apps\web\src\generated\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (C:\Users\sean\BBBUILDOUT\brokerbox\apps\web\src\generated\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (C:\Users\sean\BBBUILDOUT\brokerbox\apps\web\src\generated\client\runtime\library.js:121:6623)
+    at $n.request (C:\Users\sean\BBBUILDOUT\brokerbox\apps\web\src\generated\client\runtime\library.js:121:6307)
+    at async l (C:\Users\sean\BBBUILDOUT\brokerbox\apps\web\src\generated\client\runtime\library.js:130:9633)
+    at async main (C:\Users\sean\BBBUILDOUT\brokerbox\apps\web\prisma\seed.ts:79:24) {
+  clientVersion: '5.22.0'
+}
