@@ -1,4 +1,5 @@
-import type { NextConfig } from "next";
+﻿import type { NextConfig } from "next";
+import path from "path";
 import withPWAInit from "next-pwa";
 
 const withPWA = withPWAInit({
@@ -16,6 +17,7 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  outputFileTracingRoot: path.join(process.cwd(), "../../"),
 };
 
 export default withPWA(nextConfig);
