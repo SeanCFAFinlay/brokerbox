@@ -12,7 +12,14 @@ export async function GET() {
             data: { id: 'default', brokerageName: 'BrokerBox Financial Group' }
         });
     }
-    return NextResponse.json(settings);
+
+    // For demo purposes, merge the 'demo-user-id' outlook status
+    const user = await prisma.user.findFirst({ where: { email: 'broker@demo.com' } });
+
+    return NextResponse.json({
+        ...settings,
+        outlookEnabled: user?.outlookEnabled || false
+    });
 }
 
 export async function PUT(req: NextRequest) {

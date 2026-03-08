@@ -1,0 +1,5 @@
+npm warn Unknown project config "node-linker". This will stop working in the next major version of npm.
+npm warn Unknown project config "public-hoist-pattern". This will stop working in the next major version of npm.
+Environment variables loaded from .env
+Prisma schema loaded from apps\web\prisma\schema.prisma
+The schema at apps\web\prisma\schema.prisma is valid ≡ƒÜÇ

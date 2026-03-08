@@ -22,13 +22,15 @@ export async function updateDealStage(dealId: string, newStage: string) {
         },
     });
 
-    // Audit log
-    await prisma.auditLog.create({
+    // Activity tracking
+    await prisma.dealActivity.create({
         data: {
+            actor: 'demo',
+            actorName: 'System',
             entity: 'Deal',
             entityId: dealId,
             action: 'STAGE_CHANGE',
-            diff: { from: old.stage, to: newStage },
+            diff: { from: old.stage, to: newStage } as any,
         },
     });
 

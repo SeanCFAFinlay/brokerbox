@@ -3,6 +3,7 @@ export const revalidate = 0;
 
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { computeScenario } from '@/lib/scenarioEngine';
 import { logAudit } from '@/lib/audit';
 
 export async function GET(req: NextRequest) {
@@ -23,7 +24,14 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     const body = await req.json();
+
+    // Ensure calculations are done/verified on backend
+    if (body.type && body.inputs) {
+        body.results = computeScenario(body.type, body.inputs);
+        body.exitCost = body.results.exitCost;
+    }
+
     const scenario = await prisma.scenario.create({ data: body });
-    await logAudit('Scenario', scenario.id, 'CREATE');
+    await logAudit('Scenario', scenario.id, 'CREATE', undefined, { type: body.type }, 'Broker');
     return NextResponse.json(scenario, { status: 201 });
 }

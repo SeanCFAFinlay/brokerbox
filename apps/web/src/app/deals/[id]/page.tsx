@@ -9,6 +9,8 @@ import TaskList from '@/components/TaskList';
 import ConditionsManager from './ConditionsManager';
 import FundDealAction from './FundDealAction';
 import ApplyMatchButton from './ApplyMatchButton';
+import AuditTimeline from '@/components/AuditTimeline';
+import CalendarHighlights from '@/components/CalendarHighlights';
 
 export const dynamic = 'force-dynamic';
 
@@ -200,40 +202,40 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
                 )}
             </div>
 
-            {/* Stage History */}
-            {deal.stageHistory.length > 0 && (
-                <div className={s.card} style={{ marginTop: 24 }}>
-                    <div className={s.cardTitle}>Stage History</div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                        {deal.stageHistory.map((h: any) => (
-                            <div key={h.id} style={{ display: 'flex', gap: 12, alignItems: 'center', fontSize: 13, color: 'var(--bb-text-secondary)' }}>
-                                <span className={`${s.pill} ${stageColor(h.fromStage)} `} style={{ fontSize: 11 }}>{h.fromStage.replace('_', ' ')}</span>
-                                <span>→</span>
-                                <span className={`${s.pill} ${stageColor(h.toStage)} `} style={{ fontSize: 11 }}>{h.toStage.replace('_', ' ')}</span>
-                                <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--bb-muted)' }}>{new Date(h.changedAt).toLocaleString()} · {h.changedBy}</span>
-                            </div>
-                        ))}
+            {/* Activity & History */}
+            <div className={s.grid2} style={{ marginTop: 24 }}>
+                <div className={s.card}>
+                    <div className={s.cardTitle}>Deal Activity Trail</div>
+                    <AuditTimeline entityType="Deal" entityId={deal.id} />
+
+                    <div style={{ marginTop: 24 }}>
+                        <div style={{ fontSize: 13, textTransform: 'uppercase', fontWeight: 600, color: 'var(--bb-muted)', marginBottom: 12 }}>Stage Transitions</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            {deal.stageHistory.map((h: any) => (
+                                <div key={h.id} style={{ display: 'flex', gap: 12, alignItems: 'center', fontSize: 13, color: 'var(--bb-text-secondary)' }}>
+                                    <span className={`${s.pill} ${stageColor(h.fromStage)}`} style={{ fontSize: 11 }}>{h.fromStage.replace('_', ' ')}</span>
+                                    <span>→</span>
+                                    <span className={`${s.pill} ${stageColor(h.toStage)}`} style={{ fontSize: 11 }}>{h.toStage.replace('_', ' ')}</span>
+                                    <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--bb-muted)' }}>{new Date(h.changedAt).toLocaleDateString()}</span>
+                                </div>
+                            ))}
+                        </div>
                     </div>
+                </div>
+
+                <div className={s.card}>
+                    <div className={s.cardTitle}>Scheduled Milestones</div>
+                    {/* Filtered Calendar Events for this deal */}
+                    <CalendarHighlights dealId={deal.id} />
+
                     {deal.loan ? (
-                        <div style={{ marginTop: 24, padding: 16, background: 'var(--bb-bg-secondary)', borderRadius: 8, border: '1px solid var(--bb-border)' }}>
-                            <div style={{ fontSize: 13, textTransform: 'uppercase', fontWeight: 600, color: 'var(--bb-muted)', marginBottom: 12 }}>Active Loan Tracking</div>
-                            <div className={s.grid2}>
-                                <div>
-                                    <div style={{ fontSize: 13, color: 'var(--bb-muted)' }}>Status</div>
-                                    <div style={{ fontWeight: 600 }}>{deal.loan.status.toUpperCase()}</div>
-                                </div>
-                                <div>
-                                    <div style={{ fontSize: 13, color: 'var(--bb-muted)' }}>Principal Balance</div>
-                                    <div style={{ fontWeight: 600 }}>${deal.loan.principalBalance.toLocaleString()}</div>
-                                </div>
-                                <div>
-                                    <div style={{ fontSize: 13, color: 'var(--bb-muted)' }}>Rate</div>
-                                    <div style={{ fontWeight: 600 }}>{deal.loan.interestRate}% ({deal.loan.interestType})</div>
-                                </div>
-                                <div>
-                                    <div style={{ fontSize: 13, color: 'var(--bb-muted)' }}>Maturity</div>
-                                    <div style={{ fontWeight: 600 }}>{deal.loan.maturityDate.toISOString().split('T')[0]}</div>
-                                </div>
+                        <div style={{ marginTop: 24, padding: 16, background: 'var(--bb-surface-2)', borderRadius: 12 }}>
+                            <div style={{ fontSize: 13, textTransform: 'uppercase', fontWeight: 600, color: 'var(--bb-muted)', marginBottom: 12 }}>Live Loan Stats</div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                                <div><div style={{ fontSize: 12, color: 'var(--bb-muted)' }}>Balance</div><strong>${deal.loan.principalBalance.toLocaleString()}</strong></div>
+                                <div><div style={{ fontSize: 12, color: 'var(--bb-muted)' }}>Interest</div><strong>{deal.loan.interestRate}%</strong></div>
+                                <div><div style={{ fontSize: 12, color: 'var(--bb-muted)' }}>Maturity</div><strong>{deal.loan.maturityDate.toLocaleDateString()}</strong></div>
+                                <div><div style={{ fontSize: 12, color: 'var(--bb-muted)' }}>Status</div><strong>{deal.loan.status}</strong></div>
                             </div>
                         </div>
                     ) : (
@@ -242,7 +244,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
                         </div>
                     )}
                 </div>
-            )}
+            </div>
 
             {/* Notes & Tasks */}
             <div className={s.grid2} style={{ marginTop: 24 }}>

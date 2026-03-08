@@ -14,11 +14,13 @@ interface Settings {
     defaultTermMonths: number;
     defaultAmortMonths: number;
     defaultInterestRate: number;
+    outlookEnabled: boolean;
 }
 
 export default function SettingsPage() {
     const [settings, setSettings] = useState<Settings | null>(null);
     const [saving, setSaving] = useState(false);
+    const [syncing, setSyncing] = useState(false);
     const [toast, setToast] = useState('');
 
     useEffect(() => {
@@ -53,65 +55,91 @@ export default function SettingsPage() {
                 <p>Configure brokerage profile and default application parameters</p>
             </div>
 
-            <form onSubmit={handleSave} className={s.grid2}>
+            <div className={s.grid2}>
                 <div className={s.card}>
-                    <div className={s.cardTitle}>Brokerage Profile</div>
-                    <div className={s.formGroup}>
-                        <label className={s.formLabel}>Brokerage Name</label>
-                        <input className={s.formInput} value={settings.brokerageName} onChange={e => update('brokerageName', e.target.value)} required />
-                    </div>
-                    <div className={s.formGroup}>
-                        <label className={s.formLabel}>License Number</label>
-                        <input className={s.formInput} value={settings.licenseNumber} onChange={e => update('licenseNumber', e.target.value)} />
-                    </div>
-                    <div className={s.formGroup}>
-                        <label className={s.formLabel}>Principal Broker</label>
-                        <input className={s.formInput} value={settings.principalBroker} onChange={e => update('principalBroker', e.target.value)} />
-                    </div>
-                    <div className={s.formGroup}>
-                        <label className={s.formLabel}>Office Address</label>
-                        <input className={s.formInput} value={settings.officeAddress} onChange={e => update('officeAddress', e.target.value)} />
-                    </div>
-                    <div className={s.formGroup}>
-                        <label className={s.formLabel}>Office Phone</label>
-                        <input className={s.formInput} value={settings.officePhone} onChange={e => update('officePhone', e.target.value)} />
-                    </div>
-                    <div className={s.formGroup}>
-                        <label className={s.formLabel}>Office Email</label>
-                        <input className={s.formInput} type="email" value={settings.officeEmail} onChange={e => update('officeEmail', e.target.value)} />
+                    <div className={s.cardTitle}>📅 Calendar Integration</div>
+                    <p style={{ fontSize: 13, color: 'var(--bb-text-secondary)', marginBottom: 20 }}>
+                        Sync your deal closings and task deadlines directly to your Microsoft Outlook calendar.
+                    </p>
+                    <div style={{ padding: 16, background: 'var(--bb-bg)', borderRadius: 8, border: '1px solid var(--bb-border)', marginBottom: 24 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                                <div style={{ fontSize: 14, fontWeight: 600 }}>Microsoft Outlook</div>
+                                <div style={{ fontSize: 12, color: settings.outlookEnabled ? '#22c55e' : 'var(--bb-muted)' }}>
+                                    {settings.outlookEnabled ? 'Connected' : 'Not Connected'}
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => window.location.href = '/api/auth/outlook'}
+                                className={`${s.btn} ${settings.outlookEnabled ? s.btnSecondary : s.btnPrimary}`}
+                            >
+                                {settings.outlookEnabled ? 'Reconnect' : 'Connect Outlook'}
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <div className={s.card}>
-                    <div className={s.cardTitle}>Default Deal Parameters</div>
-                    <div className={s.formGroup}>
-                        <label className={s.formLabel}>Default Broker Fee (%)</label>
-                        <input type="number" step="0.01" className={s.formInput} value={settings.defaultBrokerFee} onChange={e => update('defaultBrokerFee', e.target.value)} />
-                    </div>
-                    <div className={s.formGroup}>
-                        <label className={s.formLabel}>Default Lender Fee (%)</label>
-                        <input type="number" step="0.01" className={s.formInput} value={settings.defaultLenderFee} onChange={e => update('defaultLenderFee', e.target.value)} />
-                    </div>
-                    <div className={s.formGroup}>
-                        <label className={s.formLabel}>Default Term (Months)</label>
-                        <input type="number" className={s.formInput} value={settings.defaultTermMonths} onChange={e => update('defaultTermMonths', e.target.value)} />
-                    </div>
-                    <div className={s.formGroup}>
-                        <label className={s.formLabel}>Default Amortization (Months)</label>
-                        <input type="number" className={s.formInput} value={settings.defaultAmortMonths} onChange={e => update('defaultAmortMonths', e.target.value)} />
-                    </div>
-                    <div className={s.formGroup}>
-                        <label className={s.formLabel}>Default Interest Rate (%)</label>
-                        <input type="number" step="0.01" className={s.formInput} value={settings.defaultInterestRate} onChange={e => update('defaultInterestRate', e.target.value)} />
+                <form onSubmit={handleSave} style={{ display: 'contents' }}>
+                    <div className={s.card}>
+                        <div className={s.cardTitle}>Brokerage Profile</div>
+                        <div className={s.formGroup}>
+                            <label className={s.formLabel}>Brokerage Name</label>
+                            <input className={s.formInput} value={settings.brokerageName} onChange={e => update('brokerageName', e.target.value)} required />
+                        </div>
+                        <div className={s.formGroup}>
+                            <label className={s.formLabel}>License Number</label>
+                            <input className={s.formInput} value={settings.licenseNumber} onChange={e => update('licenseNumber', e.target.value)} />
+                        </div>
+                        <div className={s.formGroup}>
+                            <label className={s.formLabel}>Principal Broker</label>
+                            <input className={s.formInput} value={settings.principalBroker} onChange={e => update('principalBroker', e.target.value)} />
+                        </div>
+                        <div className={s.formGroup}>
+                            <label className={s.formLabel}>Office Address</label>
+                            <input className={s.formInput} value={settings.officeAddress} onChange={e => update('officeAddress', e.target.value)} />
+                        </div>
+                        <div className={s.formGroup}>
+                            <label className={s.formLabel}>Office Phone</label>
+                            <input className={s.formInput} value={settings.officePhone} onChange={e => update('officePhone', e.target.value)} />
+                        </div>
+                        <div className={s.formGroup}>
+                            <label className={s.formLabel}>Office Email</label>
+                            <input className={s.formInput} type="email" value={settings.officeEmail} onChange={e => update('officeEmail', e.target.value)} />
+                        </div>
                     </div>
 
-                    <div style={{ marginTop: 32, display: 'flex', justifyContent: 'flex-end' }}>
-                        <button type="submit" className={`${s.btn} ${s.btnPrimary}`} disabled={saving}>
-                            {saving ? 'Saving...' : 'Save Settings'}
-                        </button>
+                    <div className={s.card}>
+                        <div className={s.cardTitle}>Default Deal Parameters</div>
+                        <div className={s.formGroup}>
+                            <label className={s.formLabel}>Default Broker Fee (%)</label>
+                            <input type="number" step="0.01" className={s.formInput} value={settings.defaultBrokerFee} onChange={e => update('defaultBrokerFee', e.target.value)} />
+                        </div>
+                        <div className={s.formGroup}>
+                            <label className={s.formLabel}>Default Lender Fee (%)</label>
+                            <input type="number" step="0.01" className={s.formInput} value={settings.defaultLenderFee} onChange={e => update('defaultLenderFee', e.target.value)} />
+                        </div>
+                        <div className={s.formGroup}>
+                            <label className={s.formLabel}>Default Term (Months)</label>
+                            <input type="number" className={s.formInput} value={settings.defaultTermMonths} onChange={e => update('defaultTermMonths', e.target.value)} />
+                        </div>
+                        <div className={s.formGroup}>
+                            <label className={s.formLabel}>Default Amortization (Months)</label>
+                            <input type="number" className={s.formInput} value={settings.defaultAmortMonths} onChange={e => update('defaultAmortMonths', e.target.value)} />
+                        </div>
+                        <div className={s.formGroup}>
+                            <label className={s.formLabel}>Default Interest Rate (%)</label>
+                            <input type="number" step="0.01" className={s.formInput} value={settings.defaultInterestRate} onChange={e => update('defaultInterestRate', e.target.value)} />
+                        </div>
+
+                        <div style={{ marginTop: 32, display: 'flex', justifyContent: 'flex-end' }}>
+                            <button type="submit" className={`${s.btn} ${s.btnPrimary}`} disabled={saving}>
+                                {saving ? 'Saving...' : 'Save Settings'}
+                            </button>
+                        </div>
                     </div>
-                </div>
-            </form>
+                </form>
+            </div>
 
             {toast && <div className={`${s.toast} ${s.toastSuccess}`}>{toast}</div>}
         </>

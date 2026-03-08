@@ -20,12 +20,15 @@ export async function POST(req: NextRequest) {
 
     // Convert to numbers
     const totalAmount = Number(body.totalAmount);
+    const availableAmount = Number(body.availableAmount) || totalAmount;
 
     const pool = await prisma.capitalPool.create({
         data: {
             name: body.name,
             totalAmount,
-            availableAmount: totalAmount, // Initially, available = total
+            availableAmount,
+            utilizationRate: ((totalAmount - availableAmount) / totalAmount) * 100,
+            effectiveLTV: Number(body.effectiveLTV) || 75,
             minInvestment: Number(body.minInvestment) || 50000,
             targetYield: Number(body.targetYield) || 8.0,
             lenderId: body.lenderId,

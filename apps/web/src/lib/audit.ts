@@ -3,16 +3,20 @@ import prisma from './prisma';
 export async function logAudit(
     entity: string,
     entityId: string,
-    action: 'CREATE' | 'UPDATE' | 'DELETE',
-    diff?: Record<string, { old: unknown; new: unknown }>
+    action: string,
+    diff?: Record<string, { old: unknown; new: unknown }>,
+    metadata?: Record<string, unknown>,
+    actorName: string = 'System'
 ) {
-    await prisma.auditLog.create({
+    await prisma.dealActivity.create({
         data: {
             actor: 'demo',
+            actorName,
             entity,
             entityId,
             action,
             diff: diff as any,
+            metadata: metadata as any,
         },
     });
 }

@@ -73,7 +73,28 @@ export async function POST(req: NextRequest) {
         }))
     );
 
-    const { applyToDeal, selectedLenderId } = await req.json().catch(() => ({}));
+    const { applyToDeal, selectedLenderId } = await req.clone().json().catch(() => ({}));
+
+    // Step 1: Create a MatchRun record to group these results
+    const matchRun = await prisma.matchRun.create({
+        data: {
+            dealId: deal.id,
+        }
+    });
+
+    // Step 2: Persist all match results as snapshots linked to the MatchRun
+    await prisma.lenderMatchSnapshot.createMany({
+        data: results.map(r => ({
+            dealId: deal.id,
+            matchRunId: matchRun.id,
+            lenderId: r.lenderId,
+            score: r.score,
+            passed: r.passed,
+            failures: r.failures,
+            snapshot: lenders.find(l => l.id === r.lenderId) as any
+        }))
+    });
+
     if (applyToDeal && dealId) {
         const topMatch = results[0];
         const updateData: any = {
@@ -91,8 +112,8 @@ export async function POST(req: NextRequest) {
             where: { id: dealId },
             data: updateData
         });
-        await logAudit('Deal', dealId, 'UPDATE', { match: { old: deal.lenderId, new: selectedLenderId } });
+        await logAudit('Deal', dealId, 'MATCH_APPLIED', { lenderId: selectedLenderId }, { matchRunId: matchRun.id }, 'Broker');
     }
 
-    return NextResponse.json({ borrower, deal, results });
+    return NextResponse.json({ borrower, deal, results, matchRunId: matchRun.id });
 }

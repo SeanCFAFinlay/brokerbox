@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { logAudit } from '@/lib/audit';
+import { syncToCalendar } from '@/lib/calendar';
 
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
@@ -45,6 +46,17 @@ export async function POST(req: NextRequest) {
                 entityId: body.entityId,
             }
         });
+
+        if (task.dueDate) {
+            await syncToCalendar({
+                title: `Task: ${task.title}`,
+                description: task.description || '',
+                startTime: task.dueDate,
+                eventType: 'task',
+                sourceId: task.id,
+                sourceType: 'Task'
+            });
+        }
 
         await logAudit('Task', task.id, 'CREATE');
 

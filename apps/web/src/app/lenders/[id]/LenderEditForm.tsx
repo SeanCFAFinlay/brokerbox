@@ -43,8 +43,8 @@ export default function LenderEditForm({ lender }: LenderEditFormProps) {
         delete payload.deals;
 
         // Ensure numbers
-        ['minCreditScore', 'maxLTV', 'maxGDS', 'maxTDS', 'minLoan', 'maxLoan', 'termMin', 'termMax', 'pricingPremium', 'baseRate', 'lenderFees', 'speed', 'exceptionsTolerance', 'appetite', 'capitalAvailable', 'capitalCommitted'].forEach(k => {
-            payload[k] = Number(payload[k]);
+        ['minCreditScore', 'maxLTV', 'ruralMaxLTV', 'maxGDS', 'maxTDS', 'minLoan', 'maxLoan', 'termMin', 'termMax', 'pricingPremium', 'baseRate', 'lenderFees', 'speed', 'exceptionsTolerance', 'appetite', 'capitalAvailable', 'capitalCommitted'].forEach(k => {
+            if (payload[k] !== undefined) payload[k] = Number(payload[k]);
         });
 
         const res = await fetch(`/api/lenders/${lender.id}`, {
@@ -103,6 +103,8 @@ export default function LenderEditForm({ lender }: LenderEditFormProps) {
                             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Term:</span> <span>{lender.termMin} - {lender.termMax} months</span></div>
                             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Min Credit:</span> <span>{lender.minCreditScore}</span></div>
                             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Max LTV:</span> <span>{lender.maxLTV}%</span></div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Rural Max LTV:</span> <span>{lender.ruralMaxLTV || lender.maxLTV}%</span></div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Self-Employed:</span> <span>{lender.allowsSelfEmployed ? 'Allowed' : 'Not Allowed'}</span></div>
                             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Max GDS/TDS:</span> <span>{lender.maxGDS}% / {lender.maxTDS}%</span></div>
                         </div>
                     </div>
@@ -234,6 +236,11 @@ export default function LenderEditForm({ lender }: LenderEditFormProps) {
                     <div className={s.formGroup}><label className={s.formLabel}>Max Term (mos)</label><input className={s.formInput} type="number" value={form.termMax} onChange={e => update('termMax', e.target.value)} /></div>
                     <div className={s.formGroup}><label className={s.formLabel}>Min Credit Score</label><input className={s.formInput} type="number" value={form.minCreditScore} onChange={e => update('minCreditScore', e.target.value)} /></div>
                     <div className={s.formGroup}><label className={s.formLabel}>Max LTV (%)</label><input className={s.formInput} type="number" value={form.maxLTV} onChange={e => update('maxLTV', e.target.value)} /></div>
+                    <div className={s.formGroup}><label className={s.formLabel}>Rural Max LTV (%)</label><input className={s.formInput} type="number" value={form.ruralMaxLTV || form.maxLTV} onChange={e => update('ruralMaxLTV', e.target.value)} /></div>
+                    <div className={s.formGroup} style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 24 }}>
+                        <input type="checkbox" checked={form.allowsSelfEmployed} onChange={e => update('allowsSelfEmployed', e.target.checked)} />
+                        <label className={s.formLabel} style={{ marginBottom: 0 }}>Allows Self-Employed</label>
+                    </div>
                     <div className={s.formGroup}><label className={s.formLabel}>Max GDS (%)</label><input className={s.formInput} type="number" value={form.maxGDS} onChange={e => update('maxGDS', e.target.value)} /></div>
                     <div className={s.formGroup}><label className={s.formLabel}>Max TDS (%)</label><input className={s.formInput} type="number" value={form.maxTDS} onChange={e => update('maxTDS', e.target.value)} /></div>
 

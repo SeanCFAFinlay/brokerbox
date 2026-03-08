@@ -47,3 +47,53 @@ a {
     overflow: hidden;
     clip: rect(0 0 0 0);
 }
+
+.main-content {
+    flex: 1;
+    margin-left: 260px;
+    background: var(--bb-bg);
+    min-height: 100vh;
+    transition: margin-left 0.3s ease;
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0;
+    }
+}
+
+.main-header {
+    height: 64px;
+    border-bottom: 1px solid var(--bb-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    position: sticky;
+    top: 0;
+    background: var(--bb-bg);
+    z-index: 900;
+}
+
+@media (max-width: 768px) {
+    .main-header {
+        padding: 0 16px;
+    }
+}
+
+.hamburger {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--bb-text);
+    font-size: 24px;
+    cursor: pointer;
+    padding: 8px;
+    margin-left: -8px;
+}
+
+@media (max-width: 768px) {
+    .hamburger {
+        display: block;
+    }
+}

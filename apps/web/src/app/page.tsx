@@ -22,7 +22,7 @@ export default async function DashboardPage() {
       orderBy: { createdAt: 'desc' },
       take: 5
     }),
-    prisma.auditLog.findMany({ orderBy: { timestamp: 'desc' }, take: 8 }),
+    prisma.dealActivity.findMany({ orderBy: { timestamp: 'desc' }, take: 8 }),
     prisma.lender.findMany({ where: { status: 'active' }, select: { capitalAvailable: true, capitalCommitted: true } }),
   ]);
 
@@ -176,7 +176,7 @@ export default async function DashboardPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {recentLogs.map((log: any) => (
                 <div key={log.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--bb-text-secondary)', borderBottom: '1px solid var(--bb-border)', paddingBottom: 8 }}>
-                  <span><strong>{log.action}</strong> {log.entity} #{log.entityId.slice(-6)}</span>
+                  <span><strong>{log.action}</strong> {log.entity} #{log.entityId.slice(-6)} <small>by {log.actorName || 'System'}</small></span>
                   <span>{new Date(log.timestamp).toLocaleDateString()}</span>
                 </div>
               ))}
