@@ -35,3 +35,15 @@ ts-errors.txt
 build-error.log
 *.bak
 *.bak.*
+
+# local build junk
+.next/
+.turbo/
+**/.next/
+**/.turbo/
+pnpm_install_log*.txt
+web_build_log*.txt
+web_build_error.txt
+vercel_prod_log*.txt
+packages/database/.turbo/
+apps/web/.next/
