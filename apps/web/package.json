@@ -4,13 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate --schema=../../packages/database/prisma/schema.prisma && next build",
+    "build": "pnpm exec prisma generate --schema=../../packages/database/prisma/schema.prisma && next build",
     "start": "next start",
     "lint": "eslint .",
-    "db:generate": "prisma generate --schema=../../packages/database/prisma/schema.prisma",
-    "db:migrate": "prisma migrate dev --schema=../../packages/database/prisma/schema.prisma",
-    "db:seed": "tsx ../../packages/database/prisma/seed.ts",
-    "db:push": "prisma db push --schema=../../packages/database/prisma/schema.prisma"
+    "db:generate": "pnpm exec prisma generate --schema=../../packages/database/prisma/schema.prisma",
+    "db:migrate": "pnpm exec prisma migrate dev --schema=../../packages/database/prisma/schema.prisma",
+    "db:seed": "pnpm exec tsx ../../packages/database/prisma/seed.ts",
+    "db:push": "pnpm exec prisma db push --schema=../../packages/database/prisma/schema.prisma"
   },
   "prisma": {
     "seed": "tsx ../../packages/database/prisma/seed.ts"
