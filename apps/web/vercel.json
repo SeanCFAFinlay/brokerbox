@@ -1,0 +1,5 @@
+{
+    "buildCommand": "pnpm run build --filter @brokerbox/web",
+    "installCommand": "pnpm install",
+    "framework": "nextjs"
+}

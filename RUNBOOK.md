@@ -60,3 +60,22 @@ Inside the terminal window, press:
 ## Dev Authentication
 Each of the 3 mobile apps maintains a strict `_layout.tsx` Dev Password Gate. 
 **Access Password:** `admin`
+## Deployment
+
+### Web Application (Vercel)
+The web app is configured for Vercel. Ensure you set the `DATABASE_URL` environment variable in the Vercel dashboard.
+- Build Command: `pnpm run build --filter @brokerbox/web`
+- Root Directory: `apps/web`
+
+### Mobile Applications (EAS)
+Use Expo Application Services (EAS) to build and submit the mobile apps.
+1. Install EAS CLI: `npm install -g eas-cli`
+2. Login: `eas login`
+3. Build: `eas build --platform all --profile production`
+
+### Backend API (Docker)
+The API can be deployed using the provided `Dockerfile` in `apps/api`.
+```bash
+docker build -t brokerbox-api -f apps/api/Dockerfile .
+docker run -p 3001:3001 -e JWT_SECRET=your_secret brokerbox-api
+```
