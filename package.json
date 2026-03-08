@@ -1,36 +1,35 @@
 {
-    "name":  "brokerbox",
-    "private":  true,
-    "packageManager":  "pnpm@10.6.5",
-    "scripts":  {
-                    "dev":  "turbo run dev",
-                    "build":  "turbo run build",
-                    "lint":  "turbo run lint",
-                    "typecheck":  "turbo run typecheck",
-                    "db:generate":  "pnpm --filter @brokerbox/database db:generate",
-                    "db:migrate":  "pnpm -C apps/web db:migrate",
-                    "db:push":  "pnpm --filter @brokerbox/database db:push",
-                    "db:seed":  "pnpm -C apps/web db:seed",
-                    "api:dev":  "pnpm -C apps/api dev",
-                    "api:build":  "pnpm -C apps/api build"
-                },
-    "devDependencies":  {
-                            "@expo/cli":  "^55.0.14",
-                            "@types/minimatch":  "^6.0.0",
-                            "@types/node":  "^20.11.0",
-                            "@types/react-native":  "^0.73.0",
-                            "prisma":  "^5.22.0",
-                            "@prisma/client":  "^5.22.0",
-                            "turbo":  "^2.1.1",
-                            "typescript":  "^5.3.3",
-                            "cross-env":  "^7.0.3",
-                            "next":  "16.1.6",
-                            "client-only":  "0.0.1"
-                        },
-    "pnpm":  {
-                 "overrides":  {
-                                   "@types/react":  "^18.2.0",
-                                   "@types/react-dom":  "^18.2.0"
-                               }
-             }
+    "name": "brokerbox",
+    "private": true,
+    "packageManager": "pnpm@10.6.5",
+    "scripts": {
+        "dev": "turbo run dev",
+        "build": "turbo run build",
+        "lint": "turbo run lint",
+        "typecheck": "turbo run typecheck",
+        "db:generate": "pnpm --filter @brokerbox/database db:generate",
+        "db:migrate": "pnpm -C apps/web db:migrate",
+        "db:push": "pnpm --filter @brokerbox/database db:push",
+        "db:seed": "pnpm -C apps/web db:seed",
+        "api:dev": "pnpm -C apps/api dev",
+        "api:build": "pnpm -C apps/api build"
+    },
+    "devDependencies": {
+        "@expo/cli": "^55.0.14",
+        "@types/minimatch": "^6.0.0",
+        "@types/node": "^20.11.0",
+        "@types/react-native": "^0.73.0",
+        "prisma": "^5.22.0",
+        "@prisma/client": "^5.22.0",
+        "turbo": "^2.1.1",
+        "typescript": "^5.3.3",
+        "cross-env": "^7.0.3",
+        "next": "16.1.6"
+    },
+    "pnpm": {
+        "overrides": {
+            "@types/react": "^18.2.0",
+            "@types/react-dom": "^18.2.0"
+        }
+    }
 }
