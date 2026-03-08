@@ -19,9 +19,9 @@
         "@types/minimatch": "^6.0.0",
         "@types/node": "^20.11.0",
         "@types/react-native": "^0.73.0",
-        "typescript": "^5.3.3",
+        "prisma": "^5.22.0",
         "turbo": "^2.1.1",
-        "prisma": "^5.22.0"
+        "typescript": "^5.3.3"
     },
     "pnpm": {
         "overrides": {
@@ -34,5 +34,8 @@
             "prisma",
             "@prisma/*"
         ]
+    },
+    "dependencies": {
+        "cross-env": "^10.1.0"
     }
 }

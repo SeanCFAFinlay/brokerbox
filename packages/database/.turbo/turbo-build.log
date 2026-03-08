@@ -1,0 +1,7 @@
+
+> @brokerbox/database@1.0.0 build C:\Users\sean\BBBUILDOUT\brokerbox\packages\database
+> pnpm exec prisma generate --schema=./prisma/schema.prisma && tsc
+
+Prisma schema loaded from prisma\schema.prisma
+Error: Command failed with exit code 1: pnpm add @prisma/client@5.22.0 --silent
+ ELIFECYCLE  Command failed with exit code 1.

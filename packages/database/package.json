@@ -12,10 +12,10 @@
     }
   },
   "scripts": {
-    "build": "pnpm exec prisma generate --schema=./prisma/schema.prisma && tsc",
+    "build": "cross-env PRISMA_GENERATE_SKIP_AUTOINSTALL=true pnpm exec prisma generate --schema=./prisma/schema.prisma && tsc",
     "dev": "tsc -w",
-    "db:generate": "pnpm exec prisma generate --schema=./prisma/schema.prisma",
-    "db:push": "pnpm exec prisma db push --schema=./prisma/schema.prisma"
+    "db:generate": "cross-env PRISMA_GENERATE_SKIP_AUTOINSTALL=true pnpm exec prisma generate --schema=./prisma/schema.prisma",
+    "db:push": "cross-env PRISMA_GENERATE_SKIP_AUTOINSTALL=true pnpm exec prisma db push --schema=./prisma/schema.prisma"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0"
