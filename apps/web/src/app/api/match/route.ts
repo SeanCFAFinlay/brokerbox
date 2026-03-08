@@ -4,6 +4,7 @@ export const revalidate = 0;
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { runMatch } from '@/lib/matchEngine';
+import { logAudit } from '@/lib/audit';
 
 export async function POST(req: NextRequest) {
     const { borrowerId, dealId } = await req.json();
@@ -33,6 +34,7 @@ export async function POST(req: NextRequest) {
             creditScore: borrower.creditScore,
             income: borrower.income,
             province: borrower.province,
+            city: borrower.city,
             liabilities: borrower.liabilities,
         },
         {
@@ -66,8 +68,31 @@ export async function POST(req: NextRequest) {
             appetite: l.appetite,
             pricingPremium: l.pricingPremium,
             documentRequirements: l.documentRequirements,
+            allowsSelfEmployed: l.allowsSelfEmployed ?? true,
+            ruralMaxLTV: l.ruralMaxLTV ?? l.maxLTV,
         }))
     );
+
+    const { applyToDeal, selectedLenderId } = await req.json().catch(() => ({}));
+    if (applyToDeal && dealId) {
+        const topMatch = results[0];
+        const updateData: any = {
+            matchScore: topMatch?.score || 0
+        };
+        if (selectedLenderId) {
+            updateData.lenderId = selectedLenderId;
+            const specificMatch = results.find(r => r.lenderId === selectedLenderId);
+            if (specificMatch) {
+                updateData.matchScore = specificMatch.score;
+                updateData.stage = 'matched';
+            }
+        }
+        await prisma.deal.update({
+            where: { id: dealId },
+            data: updateData
+        });
+        await logAudit('Deal', dealId, 'UPDATE', { match: { old: deal.lenderId, new: selectedLenderId } });
+    }
 
     return NextResponse.json({ borrower, deal, results });
 }

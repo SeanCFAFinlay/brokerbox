@@ -3,6 +3,7 @@ import s from '@/styles/shared.module.css';
 import { PipelineChart } from '@/components/dashboard/PipelineChart';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { ActionItems } from '@/components/dashboard/ActionItems';
+import TaskList from '@/components/TaskList';
 
 export const dynamic = 'force-dynamic';
 
@@ -130,10 +131,15 @@ export default async function DashboardPage() {
           <PipelineChart data={chartData} />
         </div>
 
-        {/* Action Items */}
-        <div className={s.card}>
-          <div className={s.cardTitle}>Action Items</div>
-          <ActionItems items={actionItems} />
+        {/* Action Items & Tasks */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <div className={s.card}>
+            <div className={s.cardTitle}>Action Items</div>
+            <ActionItems items={actionItems} />
+          </div>
+          <div className={s.card}>
+            <TaskList />
+          </div>
         </div>
       </div>
 

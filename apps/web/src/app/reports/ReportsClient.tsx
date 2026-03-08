@@ -2,7 +2,7 @@
 import { useMemo } from 'react';
 import s from '@/styles/shared.module.css';
 
-interface Deal { id: string; stage: string; loanAmount: number; propertyType: string; createdAt: string; fundingDate: string | null; lender?: { name: string } | null; borrower: { firstName: string, lastName: string } }
+interface Deal { id: string; stage: string; loanAmount: number; propertyType: string; createdAt: string; fundingDate: string | null; lender?: { name: string } | null; borrower: { firstName: string, lastName: string }; totalRevenue: number | null; agentCommissionSplit: number; netBrokerageRevenue: number | null; }
 interface AuditLog { id: string; timestamp: Date; actor: string; entity: string; entityId: string; action: string; diff: any; }
 
 export default function ReportsClient({ deals, auditLogs, totalBorrowers }: { deals: Deal[], auditLogs: AuditLog[], totalBorrowers: number }) {
@@ -18,6 +18,9 @@ export default function ReportsClient({ deals, auditLogs, totalBorrowers }: { de
 
     const fundedDeals = deals.filter(d => d.stage === 'funded');
     const totalFunded = fundedDeals.reduce((s, d) => s + d.loanAmount, 0);
+
+    const totalPipelineGross = deals.reduce((s, d) => s + (d.totalRevenue || 0), 0);
+    const totalPipelineNet = deals.reduce((s, d) => s + (d.netBrokerageRevenue || 0), 0);
 
     const lenderWins: Record<string, number> = {};
     fundedDeals.forEach(d => {
@@ -45,7 +48,7 @@ export default function ReportsClient({ deals, auditLogs, totalBorrowers }: { de
     const entityTypes = Array.from(new Set(auditLogs.map(l => l.entity)));
 
     function downloadCSV() {
-        const headers = ['Deal ID', 'Borrower', 'Lender', 'Stage', 'Loan Amount', 'Property Type', 'Created Date', 'Funding Date'];
+        const headers = ['Deal ID', 'Borrower', 'Lender', 'Stage', 'Loan Amount', 'Property Type', 'Created Date', 'Funding Date', 'Total Gross Revenue', 'Agent Split (%)', 'Brokerage Net Retained'];
         const rows = deals.map(d => [
             d.id,
             `"${d.borrower.firstName} ${d.borrower.lastName}"`,
@@ -54,7 +57,10 @@ export default function ReportsClient({ deals, auditLogs, totalBorrowers }: { de
             d.loanAmount,
             d.propertyType,
             new Date(d.createdAt).toISOString().split('T')[0],
-            d.fundingDate ? new Date(d.fundingDate).toISOString().split('T')[0] : ''
+            d.fundingDate ? new Date(d.fundingDate).toISOString().split('T')[0] : '',
+            d.totalRevenue || 0,
+            d.agentCommissionSplit || 0,
+            d.netBrokerageRevenue || 0
         ]);
 
         const csvContent = "data:text/csv;charset=utf-8,"
@@ -82,11 +88,13 @@ export default function ReportsClient({ deals, auditLogs, totalBorrowers }: { de
                 </div>
             </div>
 
-            <div className={s.kpiRow} style={{ marginBottom: 24, gridTemplateColumns: 'repeat(4, 1fr)' }}>
+            <div className={s.kpiRow} style={{ marginBottom: 24, gridTemplateColumns: 'repeat(6, 1fr)' }}>
                 <div className={s.kpiCard}><div className={s.kpiLabel}>Total Deals</div><div className={s.kpiValue}>{deals.length}</div></div>
                 <div className={s.kpiCard}><div className={s.kpiLabel}>Close Rate</div><div className={s.kpiValue} style={{ color: 'var(--bb-success)' }}>{closeRate.toFixed(1)}%</div></div>
                 <div className={s.kpiCard}><div className={s.kpiLabel}>Avg Time to Fund</div><div className={s.kpiValue}>{avgDaysToFund > 0 ? `${avgDaysToFund.toFixed(0)} days` : 'N/A'}</div></div>
                 <div className={s.kpiCard}><div className={s.kpiLabel}>Total Borrowers</div><div className={s.kpiValue}>{totalBorrowers}</div></div>
+                <div className={s.kpiCard}><div className={s.kpiLabel}>Pipeline Gross Revenue</div><div className={s.kpiValue} style={{ color: 'var(--bb-brand)' }}>${(totalPipelineGross / 1000).toFixed(1)}K</div></div>
+                <div className={s.kpiCard}><div className={s.kpiLabel}>Brokerage Net Retained</div><div className={s.kpiValue} style={{ color: 'var(--bb-success)' }}>${(totalPipelineNet / 1000).toFixed(1)}K</div></div>
             </div>
 
             <div className={s.grid2}>

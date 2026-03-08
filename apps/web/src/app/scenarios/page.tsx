@@ -47,6 +47,7 @@ export default function ScenarioBuilderPage() {
     const [comparing, setComparing] = useState<string[]>([]);
     const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
     const [editNoteText, setEditNoteText] = useState('');
+    const [matchData, setMatchData] = useState<any[]>([]);
 
     useEffect(() => { fetch('/api/borrowers').then(r => r.json()).then(setBorrowers); }, []);
 
@@ -175,6 +176,53 @@ export default function ScenarioBuilderPage() {
                                 <div className={s.kpiCard}><div className={s.kpiLabel}>TDS</div><div className={s.kpiValue} style={{ color: results.tdsPass ? 'var(--bb-success)' : 'var(--bb-danger)' }}>{results.tds}%</div></div>
                                 <div className={s.kpiCard}><div className={s.kpiLabel}>Stress Test</div><div className={s.kpiValue} style={{ color: results.stressPass ? 'var(--bb-success)' : 'var(--bb-danger)' }}>{results.stressPass ? 'PASS' : 'FAIL'}</div></div>
                             </div>
+
+                            <button
+                                className={`${s.btn} ${s.btnSecondary}`}
+                                style={{ marginTop: 16, width: '100%' }}
+                                onClick={async () => {
+                                    const res = await fetch('/api/match', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            borrowerId: selectedBorrower,
+                                            dealId: selectedDeal || undefined
+                                        })
+                                    });
+                                    if (res.ok) {
+                                        const data = await res.json();
+                                        setMatchData(data.results.slice(0, 3));
+                                    }
+                                }}
+                            >
+                                🔍 Find Matching Lenders
+                            </button>
+
+                            {matchData.length > 0 && (
+                                <div style={{ marginTop: 16, borderTop: '1px solid var(--bb-border)', paddingTop: 16 }}>
+                                    <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Top Lender Matches</div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                        {matchData.map(m => (
+                                            <div key={m.lenderId} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 8, background: 'var(--bb-bg)', borderRadius: 6 }}>
+                                                <div className={`${s.scoreCircle}`} style={{ width: 28, height: 28, fontSize: 11 }}>{m.score}</div>
+                                                <div style={{ flex: 1, fontSize: 13 }}>
+                                                    <div style={{ fontWeight: 600 }}>{m.lenderName}</div>
+                                                    <div style={{ color: 'var(--bb-muted)', fontSize: 11 }}>Est. Rate: {m.effectiveRate.toFixed(2)}%</div>
+                                                </div>
+                                                <button
+                                                    className={`${s.btn} ${s.btnSecondary} ${s.btnSmall}`}
+                                                    onClick={() => {
+                                                        setInputs(prev => ({ ...prev, interestRate: m.effectiveRate, lenderName: m.lenderName } as any));
+                                                        setMatchData([]);
+                                                    }}
+                                                >
+                                                    Apply
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
 

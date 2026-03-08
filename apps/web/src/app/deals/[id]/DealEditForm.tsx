@@ -21,6 +21,9 @@ interface DealEditFormProps {
         exitStrategy: string | null;
         brokerFee: number | null;
         lenderFee: number | null;
+        agentCommissionSplit: number;
+        totalRevenue: number | null;
+        netBrokerageRevenue: number | null;
         notes: string | null;
     };
     lenders: { id: string; name: string }[];
@@ -63,9 +66,14 @@ export default function DealEditForm({ deal, lenders, currentLenderId }: DealEdi
             exitStrategy: form.exitStrategy || null,
             brokerFee: form.brokerFee ? Number(form.brokerFee) : null,
             lenderFee: form.lenderFee ? Number(form.lenderFee) : null,
+            agentCommissionSplit: Number(form.agentCommissionSplit) || 0,
             notes: form.notes || null,
             lenderId: form.lenderId || null,
         };
+
+        const calcTotalRev = (Number(form.loanAmount) || 0) * (((Number(form.brokerFee) || 0) + (Number(form.lenderFee) || 0)) / 100);
+        body.totalRevenue = calcTotalRev;
+        body.netBrokerageRevenue = calcTotalRev * (1 - (Number(form.agentCommissionSplit) || 0) / 100);
 
         const res = await fetch(`/api/deals/${deal.id}`, {
             method: 'PUT',
@@ -111,6 +119,14 @@ export default function DealEditForm({ deal, lenders, currentLenderId }: DealEdi
                         </div>
                     )}
                 </div>
+
+                <div className={s.cardTitle} style={{ marginTop: 24, marginBottom: 12, fontSize: 15, borderTop: '1px solid var(--bb-border)', paddingTop: 16 }}>Commission & Revenue</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, fontSize: 14 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--bb-muted)' }}>Agent Split:</span> <span style={{ fontWeight: 600 }}>{deal.agentCommissionSplit}%</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--bb-muted)' }}>Total Gross Revenue:</span> <span style={{ fontWeight: 600, color: 'var(--bb-brand)' }}>${(deal.totalRevenue || 0).toLocaleString()}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--bb-muted)' }}>Brokerage Net Retained:</span> <span style={{ fontWeight: 600, color: 'var(--bb-success)' }}>${(deal.netBrokerageRevenue || 0).toLocaleString()}</span></div>
+                </div>
+
                 {toast && <div className={`${s.toast} ${s.toastSuccess}`}>{toast}</div>}
             </div>
         );
@@ -213,9 +229,15 @@ export default function DealEditForm({ deal, lenders, currentLenderId }: DealEdi
                     </div>
                 </div>
 
-                <div className={s.formGroup} style={{ marginTop: 16 }}>
-                    <label className={s.formLabel}>Exit Strategy</label>
-                    <input className={s.formInput} value={form.exitStrategy || ''} onChange={e => update('exitStrategy', e.target.value)} placeholder="e.g. Refinance to conventional after 12 months" />
+                <div className={s.grid2} style={{ marginTop: 16 }}>
+                    <div className={s.formGroup}>
+                        <label className={s.formLabel}>Agent Commission Split (%)</label>
+                        <input className={s.formInput} type="number" step="1" value={form.agentCommissionSplit} onChange={e => update('agentCommissionSplit', Number(e.target.value))} />
+                    </div>
+                    <div className={s.formGroup}>
+                        <label className={s.formLabel}>Exit Strategy</label>
+                        <input className={s.formInput} value={form.exitStrategy || ''} onChange={e => update('exitStrategy', e.target.value)} placeholder="e.g. Refinance to conventional" />
+                    </div>
                 </div>
                 <div className={s.formGroup}>
                     <label className={s.formLabel}>Notes</label>

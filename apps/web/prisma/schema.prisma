@@ -12,10 +12,13 @@ datasource db {
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
-  name      String   @default("Demo Broker")
-  role      String   @default("broker") // admin | broker | readonly
-  createdAt DateTime @default(now())
+  name                String   @default("Demo Broker")
+  role                String   @default("broker") // admin | broker | readonly
+  baseCommissionSplit Float    @default(50) // %
+  createdAt           DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  tasks     Task[]
 }
 
 // ─── Borrower ───────────────────────────────────────────────────────────────────
@@ -131,9 +134,12 @@ model Deal {
   monthlyPayment  Float?
   matchScore      Int?
 
-  // Fees
-  brokerFee       Float?
-  lenderFee       Float?
+  // Fees & Commission
+  brokerFee             Float?
+  lenderFee             Float?
+  totalRevenue          Float?
+  agentCommissionSplit  Float    @default(50)  // %
+  netBrokerageRevenue   Float?
 
   // Dates
   closingDate     DateTime?
@@ -149,6 +155,7 @@ model Deal {
   docRequests     DocRequest[]
   stageHistory    DealStageHistory[]
   scenarios       Scenario[]
+  conditions      DealCondition[]
 }
 
 // ─── Deal Stage History ─────────────────────────────────────────────────────────
@@ -200,6 +207,7 @@ model DocRequest {
   borrower     Borrower       @relation(fields: [borrowerId], references: [id], onDelete: Cascade)
   deal         Deal?          @relation(fields: [dealId], references: [id])
   files        DocumentFile[]
+  dealConditions DealCondition[]
 }
 
 model DocumentFile {
@@ -224,6 +232,41 @@ model Note {
   content    String
   createdBy  String   @default("system")
   createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+}
+
+// ─── Deal Conditions ────────────────────────────────────────────────────────────
+
+model DealCondition {
+  id           String   @id @default(cuid())
+  dealId       String
+  description  String
+  status       String   @default("pending") // pending | met | waived
+  clearedAt    DateTime?
+  docRequestId String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  deal         Deal        @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  docRequest   DocRequest? @relation(fields: [docRequestId], references: [id], onDelete: SetNull)
+}
+
+// ─── Task ───────────────────────────────────────────────────────────────────────
+
+model Task {
+  id           String   @id @default(cuid())
+  title        String
+  description  String?
+  dueDate      DateTime?
+  status       String   @default("pending") // pending | completed
+  assignedToId String?
+  entityType   String?  // Deal | Borrower | Lender
+  entityId     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  assignedTo   User?    @relation(fields: [assignedToId], references: [id])
 
   @@index([entityType, entityId])
 }

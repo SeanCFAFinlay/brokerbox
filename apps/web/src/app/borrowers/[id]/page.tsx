@@ -4,6 +4,7 @@ import s from '@/styles/shared.module.css';
 import { notFound } from 'next/navigation';
 import BorrowerEditForm from './BorrowerEditForm';
 import NoteTimeline from '@/components/NoteTimeline';
+import TaskList from '@/components/TaskList';
 
 export const dynamic = 'force-dynamic';
 
@@ -86,11 +87,13 @@ export default async function BorrowerDetailPage({ params }: { params: Promise<{
                 </div>
             </div>
 
-            {/* Deals Table */}
             <div className={s.card} style={{ marginTop: 24 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                     <div className={s.cardTitle} style={{ marginBottom: 0 }}>Deals</div>
-                    <Link href={`/deals?borrowerId=${borrower.id}`} className={`${s.btn} ${s.btnSecondary} ${s.btnSmall}`}>View All</Link>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                        <Link href={`/deals`} className={`${s.btn} ${s.btnPrimary} ${s.btnSmall}`}>+ Create Deal</Link>
+                        <Link href={`/deals?borrowerId=${borrower.id}`} className={`${s.btn} ${s.btnSecondary} ${s.btnSmall}`}>View All</Link>
+                    </div>
                 </div>
                 {borrower.deals.length === 0 ? (
                     <div className={s.emptyState}>No deals yet.</div>
@@ -112,9 +115,15 @@ export default async function BorrowerDetailPage({ params }: { params: Promise<{
                 )}
             </div>
 
-            {/* Notes Timeline */}
-            <div style={{ marginTop: 24 }}>
-                <NoteTimeline entityType="Borrower" entityId={borrower.id} />
+            {/* Notes & Tasks */}
+            <div className={s.grid2} style={{ marginTop: 24 }}>
+                <div className={s.card}>
+                    <div className={s.cardTitle}>Borrower Notes</div>
+                    <NoteTimeline entityType="Borrower" entityId={borrower.id} />
+                </div>
+                <div className={s.card}>
+                    <TaskList entityType="Borrower" entityId={borrower.id} />
+                </div>
             </div>
 
             {/* Scenarios */}

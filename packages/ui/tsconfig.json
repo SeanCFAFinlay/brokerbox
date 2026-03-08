@@ -10,11 +10,7 @@
     "forceConsistentCasingInFileNames": true,
     "outDir": "dist",
     "declaration": true,
-    "declarationMap": true,
-    "types": [
-      "react",
-      "react-native"
-    ]
+    "declarationMap": true
   },
   "include": [
     "src/**/*"
