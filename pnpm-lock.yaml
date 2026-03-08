@@ -27,6 +27,9 @@ importers:
       '@types/react-native':
         specifier: ^0.73.0
         version: 0.73.0(@babel/core@7.29.0)(@types/react@18.3.28)(react@19.2.3)
+      client-only:
+        specifier: 0.0.1
+        version: 0.0.1
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -511,6 +514,9 @@ importers:
 
   packages/types:
     devDependencies:
+      '@types/node':
+        specifier: ^20.11.0
+        version: 20.19.37
       typescript:
         specifier: ^5.3.3
         version: 5.9.3
