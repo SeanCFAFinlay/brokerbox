@@ -1,7 +1,7 @@
 import prisma from '@/lib/prisma';
 import s from '@/styles/shared.module.css';
 import Link from 'next/link';
-import { PipelineChart } from '@/components/dashboard/PipelineChart';
+import { pipelineVolume, fundedVolume, closeRate, avgDaysToFund } from '@brokerbox/domain';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +12,20 @@ export default async function ReportsPage() {
         prisma.borrower.findMany()
     ]);
 
+    const dealDtos = deals.map(d => ({
+        id: d.id,
+        stage: d.stage,
+        loanAmount: d.loanAmount,
+        createdAt: d.createdAt,
+        fundingDate: d.fundingDate,
+        totalRevenue: d.totalRevenue,
+        netBrokerageRevenue: d.netBrokerageRevenue,
+        brokerFee: d.brokerFee,
+    }));
+    const totalPipeline = pipelineVolume(dealDtos);
+    const totalFundedVol = fundedVolume(dealDtos);
+    const closeRatePct = closeRate(dealDtos);
+    const avgDays = avgDaysToFund(dealDtos);
     const funded = deals.filter(d => d.stage === 'funded');
     const active = deals.filter(d => ['intake', 'in_review', 'matched', 'committed'].includes(d.stage));
 
@@ -71,6 +85,13 @@ export default async function ReportsPage() {
                     <h1>Executive Reports & Insights</h1>
                     <p>Performance tracking, pipeline aging, and portfolio distribution</p>
                 </div>
+            </div>
+
+            <div className={s.kpiRow} style={{ marginBottom: 24 }}>
+                <div className={s.kpiCard}><div className={s.kpiLabel}>Pipeline volume</div><div className={s.kpiValue}>${(totalPipeline / 1e6).toFixed(1)}M</div></div>
+                <div className={s.kpiCard}><div className={s.kpiLabel}>Funded volume</div><div className={s.kpiValue}>${(totalFundedVol / 1e6).toFixed(1)}M</div></div>
+                <div className={s.kpiCard}><div className={s.kpiLabel}>Close rate</div><div className={s.kpiValue}>{closeRatePct != null ? `${closeRatePct}%` : '—'}</div></div>
+                <div className={s.kpiCard}><div className={s.kpiLabel}>Avg days to fund</div><div className={s.kpiValue}>{avgDays != null ? `${avgDays}d` : '—'}</div></div>
             </div>
 
             <div className={s.card} style={{ marginBottom: 24 }}>

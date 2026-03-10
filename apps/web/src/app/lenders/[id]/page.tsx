@@ -47,6 +47,20 @@ export default async function LenderDetailPage({ params }: { params: Promise<{ i
                 <div className={s.kpiCard}><div className={s.kpiLabel}>Active Deals</div><div className={s.kpiValue}>{activeDeals.length}</div></div>
             </div>
 
+            {/* Underwriting box */}
+            <div className={s.card} style={{ marginBottom: 24 }}>
+                <div className={s.cardTitle} style={{ marginBottom: 12 }}>Underwriting box</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 16, fontSize: 14 }}>
+                    <div><span style={{ color: 'var(--bb-muted)', display: 'block', fontSize: 11, textTransform: 'uppercase' }}>Min credit</span><strong>{lender.minCreditScore ?? '—'}</strong></div>
+                    <div><span style={{ color: 'var(--bb-muted)', display: 'block', fontSize: 11, textTransform: 'uppercase' }}>Max LTV</span><strong>{lender.maxLTV != null ? `${lender.maxLTV}%` : '—'}</strong></div>
+                    <div><span style={{ color: 'var(--bb-muted)', display: 'block', fontSize: 11, textTransform: 'uppercase' }}>Max GDS</span><strong>{lender.maxGDS != null ? `${lender.maxGDS}%` : '—'}</strong></div>
+                    <div><span style={{ color: 'var(--bb-muted)', display: 'block', fontSize: 11, textTransform: 'uppercase' }}>Max TDS</span><strong>{lender.maxTDS != null ? `${lender.maxTDS}%` : '—'}</strong></div>
+                    <div><span style={{ color: 'var(--bb-muted)', display: 'block', fontSize: 11, textTransform: 'uppercase' }}>Loan range</span><strong>{lender.minLoan != null && lender.maxLoan != null ? `$${(lender.minLoan / 1000).toFixed(0)}k–$${(lender.maxLoan / 1e6).toFixed(1)}M` : '—'}</strong></div>
+                    <div><span style={{ color: 'var(--bb-muted)', display: 'block', fontSize: 11, textTransform: 'uppercase' }}>Provinces</span><strong>{(lender.supportedProvinces as string[] | null)?.length ? (lender.supportedProvinces as string[]).join(', ') : 'All'}</strong></div>
+                    <div><span style={{ color: 'var(--bb-muted)', display: 'block', fontSize: 11, textTransform: 'uppercase' }}>Property types</span><strong>{(lender.propertyTypes as string[] | null)?.length ? (lender.propertyTypes as string[]).join(', ') : '—'}</strong></div>
+                </div>
+            </div>
+
             {/* Lender Edit Form */}
             <LenderEditForm lender={{
                 id: lender.id,

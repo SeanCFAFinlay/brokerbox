@@ -2,7 +2,7 @@ import prisma from '@/lib/prisma';
 import Link from 'next/link';
 import s from '@/styles/shared.module.css';
 import { notFound } from 'next/navigation';
-import { runMatch } from '@brokerbox/domain';
+import { runMatch, dealStallRisk, documentCompleteness, getNextBestActions } from '@brokerbox/domain';
 import DealEditForm from './DealEditForm';
 import NoteTimeline from '@/components/NoteTimeline';
 import TaskList from '@/components/TaskList';
@@ -28,6 +28,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
         include: {
             borrower: true,
             lender: true,
+            conditions: true,
             docRequests: { include: { files: true }, orderBy: { createdAt: 'desc' } },
             stageHistory: { orderBy: { changedAt: 'desc' } },
             scenarios: { orderBy: { createdAt: 'desc' } },
@@ -71,6 +72,22 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
     }));
     const matchResults = runMatch(borrowerData, dealData, lenders as any).slice(0, 3);
 
+    const stall = dealStallRisk(
+        { id: deal.id, stage: deal.stage, updatedAt: deal.updatedAt, createdAt: deal.createdAt, fundingDate: deal.fundingDate, closingDate: deal.closingDate, priority: deal.priority },
+        deal.tasks.map((t) => ({ id: t.id, dueDate: t.dueDate, status: t.status, dealId: t.dealId })),
+        deal.conditions?.map((c) => ({ id: c.id, status: c.status })) ?? [],
+        deal.docRequests.map((d) => ({ id: d.id, status: d.status, createdAt: d.createdAt, expiresAt: d.expiresAt }))
+    );
+    const docStats = documentCompleteness(
+        deal.docRequests.map((d) => ({ id: d.id, status: d.status, createdAt: d.createdAt, expiresAt: d.expiresAt }))
+    );
+    const nbaForDeal = getNextBestActions(
+        [{ id: deal.borrower.id, updatedAt: deal.borrower.updatedAt }],
+        [{ id: deal.id, borrowerId: deal.borrowerId, stage: deal.stage, updatedAt: deal.updatedAt }],
+        deal.tasks.map((t) => ({ id: t.id, dueDate: t.dueDate, status: t.status, dealId: t.dealId, entityType: t.entityType, entityId: t.entityId })),
+        deal.docRequests.map((d) => ({ id: d.id, borrowerId: deal.borrowerId, dealId: deal.id, status: d.status, createdAt: d.createdAt }))
+    ).filter((a) => a.entityId === id).slice(0, 4);
+
     return (
         <>
             <div className={s.pageHeader}>
@@ -78,16 +95,34 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
                     <div>
                         <p style={{ fontSize: 13, color: 'var(--bb-muted)', marginBottom: 4 }}>
                             <Link href="/deals" style={{ color: 'var(--bb-accent)' }}>Deal Desk</Link> /
-                            <Link href={`/ borrowers / ${deal.borrowerId} `} style={{ color: 'var(--bb-accent)', marginLeft: 4 }}>{deal.borrower.firstName} {deal.borrower.lastName}</Link>
+                            <Link href={`/borrowers/${deal.borrowerId}`} style={{ color: 'var(--bb-accent)', marginLeft: 4 }}>{deal.borrower.firstName} {deal.borrower.lastName}</Link>
                         </p>
-                        <h1>{deal.propertyAddress ? deal.propertyAddress : `Deal #${deal.id.slice(-6)} `}</h1>
+                        <h1>{deal.propertyAddress ? deal.propertyAddress : `Deal #${deal.id.slice(-6)}`}</h1>
                     </div>
                     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                        <span className={`${s.pill} ${deal.priority === 'urgent' ? s.pillRed : deal.priority === 'high' ? s.pillYellow : s.pillGray} `}>{deal.priority}</span>
-                        <span className={`${s.pill} ${stageColor(deal.stage)} `}>{deal.stage.replace('_', ' ').toUpperCase()}</span>
+                        {stall.label !== 'low' && (
+                            <span className={`${s.pill} ${stall.label === 'high' ? s.pillRed : s.pillYellow}`} title={stall.reasons.join(' · ')}>
+                                Risk: {stall.label}
+                            </span>
+                        )}
+                        <span className={`${s.pill} ${deal.priority === 'urgent' ? s.pillRed : deal.priority === 'high' ? s.pillYellow : s.pillGray}`}>{deal.priority}</span>
+                        <span className={`${s.pill} ${stageColor(deal.stage)}`}>{deal.stage.replace('_', ' ').toUpperCase()}</span>
                     </div>
                 </div>
             </div>
+
+            {nbaForDeal.length > 0 && (
+                <div className={s.card} style={{ marginBottom: 24, borderLeft: '4px solid var(--bb-accent)' }}>
+                    <div className={s.cardTitle} style={{ marginBottom: 8 }}>Suggested next steps</div>
+                    <ul style={{ margin: 0, paddingLeft: 20, fontSize: 14, color: 'var(--bb-text-secondary)' }}>
+                        {nbaForDeal.map((a) => (
+                            <li key={a.type + a.entityId}>
+                                {a.href ? <Link href={a.href} style={{ color: 'var(--bb-accent)' }}>{a.title}</Link> : a.title} — {a.reason}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
 
             <div className={s.kpiRow} style={{ marginBottom: 24 }}>
                 <div className={s.kpiCard}><div className={s.kpiLabel}>Loan Amount</div><div className={s.kpiValue}>${deal.loanAmount.toLocaleString()}</div></div>
@@ -95,6 +130,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
                 <div className={s.kpiCard}><div className={s.kpiLabel}>LTV</div><div className={s.kpiValue}>{deal.ltv ? `${deal.ltv.toFixed(1)}% ` : '—'}</div></div>
                 <div className={s.kpiCard}><div className={s.kpiLabel}>Position</div><div className={s.kpiValue}>{deal.position}</div></div>
                 <div className={s.kpiCard}><div className={s.kpiLabel}>Lender</div><div className={s.kpiValue} style={{ fontSize: 18 }}>{deal.lender?.name || 'Unassigned'}</div></div>
+                <div className={s.kpiCard}><div className={s.kpiLabel}>Docs</div><div className={s.kpiValue} title={`${docStats.verified}/${docStats.requested} verified`}>{docStats.requested ? `${docStats.pctComplete}%` : '—'}</div></div>
             </div>
 
             <div className={s.grid2}>
@@ -167,7 +203,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
                         {deal.borrower.coBorrowerName && (
                             <div><strong style={{ display: 'inline-block', width: 120 }}>Co-Borrower:</strong> {deal.borrower.coBorrowerName}</div>
                         )}
-                        <Link href={`/ borrowers / ${deal.borrowerId} `} className={`${s.btn} ${s.btnSecondary} ${s.btnSmall} `} style={{ alignSelf: 'flex-start', marginTop: 8 }}>View Full Profile</Link>
+                        <Link href={`/borrowers/${deal.borrowerId}`} className={`${s.btn} ${s.btnSecondary} ${s.btnSmall}`} style={{ alignSelf: 'flex-start', marginTop: 8 }}>View Full Profile</Link>
                     </div>
                 </div>
             </div>
