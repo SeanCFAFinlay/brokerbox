@@ -4,19 +4,31 @@ export const revalidate = 0;
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { logAudit } from '@/lib/audit';
+import { parseBody, handlePrismaError } from '@/lib/api';
+import { createDealSchema } from '@/lib/schemas';
 
 export async function GET() {
-    const deals = await prisma.deal.findMany({ orderBy: { updatedAt: 'desc' }, include: { borrower: true, lender: true } });
-    return NextResponse.json(deals);
+    try {
+        const deals = await prisma.deal.findMany({ orderBy: { updatedAt: 'desc' }, include: { borrower: true, lender: true } });
+        return NextResponse.json(deals);
+    } catch (err) {
+        return handlePrismaError(err);
+    }
 }
 
 export async function POST(req: NextRequest) {
-    const body = await req.json();
-    // compute LTV
-    if (body.propertyValue && body.loanAmount) {
-        body.ltv = (body.loanAmount / body.propertyValue) * 100;
+    try {
+        const raw = await req.json();
+        const parsed = parseBody(createDealSchema, raw);
+        if (parsed.success === false) return parsed.response;
+        const data = { ...parsed.data };
+        if (typeof data.propertyValue === 'number' && typeof data.loanAmount === 'number') {
+            (data as Record<string, unknown>).ltv = (data.loanAmount / data.propertyValue) * 100;
+        }
+        const deal = await prisma.deal.create({ data });
+        await logAudit('Deal', deal.id, 'CREATE');
+        return NextResponse.json(deal, { status: 201 });
+    } catch (err) {
+        return handlePrismaError(err);
     }
-    const deal = await prisma.deal.create({ data: body });
-    await logAudit('Deal', deal.id, 'CREATE');
-    return NextResponse.json(deal, { status: 201 });
 }
