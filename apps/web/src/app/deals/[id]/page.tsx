@@ -2,7 +2,7 @@ import prisma from '@/lib/prisma';
 import Link from 'next/link';
 import s from '@/styles/shared.module.css';
 import { notFound } from 'next/navigation';
-import { runMatch } from '@/lib/matchEngine';
+import { runMatch } from '@brokerbox/domain';
 import DealEditForm from './DealEditForm';
 import NoteTimeline from '@/components/NoteTimeline';
 import TaskList from '@/components/TaskList';

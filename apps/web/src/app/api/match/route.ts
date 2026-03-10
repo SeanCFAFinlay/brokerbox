@@ -3,7 +3,7 @@ export const revalidate = 0;
 
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { runMatch } from '@/lib/matchEngine';
+import { runMatch } from '@brokerbox/domain';
 import { logAudit } from '@/lib/audit';
 
 export async function POST(req: NextRequest) {

@@ -1,6 +1,7 @@
 import Fastify, { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { PrismaClient, Lender, User } from '@brokerbox/database';
-import { runMatch, uploadDocument, MatchResult } from '@brokerbox/utils';
+import { runMatchDealLender, type SimpleMatchResult } from '@brokerbox/domain';
+import { uploadDocument } from '@brokerbox/utils';
 import { z } from 'zod';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
@@ -134,8 +135,8 @@ fastify.post('/match/deal', { preHandler: [authenticate] }, async (request: Fast
         where: { status: 'active' },
     });
 
-    const results = lenders.map((lender: Lender) => runMatch(deal, lender));
-    const sorted = results.sort((a: MatchResult, b: MatchResult) => b.score - a.score);
+    const results = lenders.map((lender: Lender) => runMatchDealLender(deal, lender));
+    const sorted = results.sort((a: SimpleMatchResult, b: SimpleMatchResult) => b.score - a.score);
 
     return sorted;
 });

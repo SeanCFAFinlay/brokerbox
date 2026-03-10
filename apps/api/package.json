@@ -7,6 +7,7 @@
         "build": "tsc"
     },
     "dependencies": {
+    "@brokerbox/domain": "workspace:^",
         "fastify": "^4.26.1",
         "@brokerbox/database": "workspace:^",
         "@brokerbox/utils": "workspace:^",
