@@ -45,5 +45,7 @@ pnpm_install_log*.txt
 web_build_log*.txt
 web_build_error.txt
 vercel_prod_log*.txt
+local_build_error.log
 packages/database/.turbo/
+packages/database/src/generated/
 apps/web/.next/
