@@ -16,6 +16,20 @@ const STAGE_COLORS: Record<string, string> = {
     'closed': 'var(--bb-text-secondary)',
 };
 
+interface TooltipPayloadItem { payload: { count: number; volumeM: string; displayStage: string } }
+function PipelineChartTooltip({ active, payload, label }: { active?: boolean; payload?: TooltipPayloadItem[]; label?: string }) {
+    if (active && payload && payload.length) {
+        return (
+            <div className={s.tooltip}>
+                <div className={s.tooltipTitle}>{label}</div>
+                <div className={s.tooltipValue}>{payload[0].payload.count} Deals</div>
+                <div className={s.tooltipDesc}>${payload[0].payload.volumeM}M Total Volume</div>
+            </div>
+        );
+    }
+    return null;
+}
+
 export function PipelineChart({ data }: PipelineChartProps) {
     const formattedData = useMemo(() => {
         return data.map(d => ({
@@ -24,19 +38,6 @@ export function PipelineChart({ data }: PipelineChartProps) {
             volumeM: (d.volume / 1000000).toFixed(1)
         }));
     }, [data]);
-
-    const CustomTooltip = ({ active, payload, label }: any) => {
-        if (active && payload && payload.length) {
-            return (
-                <div className={s.tooltip}>
-                    <div className={s.tooltipTitle}>{label}</div>
-                    <div className={s.tooltipValue}>{payload[0].payload.count} Deals</div>
-                    <div className={s.tooltipDesc}>${payload[0].payload.volumeM}M Total Volume</div>
-                </div>
-            );
-        }
-        return null;
-    };
 
     return (
         <div className={s.container}>
@@ -54,7 +55,7 @@ export function PipelineChart({ data }: PipelineChartProps) {
                         tickLine={false}
                         allowDecimals={false}
                     />
-                    <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--bb-surface-hover)' }} />
+                    <Tooltip content={<PipelineChartTooltip />} cursor={{ fill: 'var(--bb-surface-hover)' }} />
                     <Bar dataKey="count" radius={[4, 4, 0, 0]} maxBarSize={60}>
                         {formattedData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={STAGE_COLORS[entry.stage] || 'var(--bb-accent)'} />

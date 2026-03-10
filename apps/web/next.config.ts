@@ -1,4 +1,4 @@
-﻿import type { NextConfig } from "next";
+import type { NextConfig } from "next";
 import path from "path";
 import withPWAInit from "next-pwa";
 
@@ -13,9 +13,11 @@ const withPWA = withPWAInit({
 });
 
 const nextConfig: NextConfig = {
-  turbopack: {},
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
+  },
+  eslint: {
+    ignoreDuringBuilds: true, // TODO: fix no-explicit-any and other lint, then set to false
   },
   outputFileTracingRoot: path.join(process.cwd(), "../../"),
 };

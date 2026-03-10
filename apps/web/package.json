@@ -4,10 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "pnpm exec prisma generate --schema=../../packages/database/prisma/schema.prisma && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "db:generate": "pnpm exec prisma generate --schema=../../packages/database/prisma/schema.prisma",
+    "db:generate": "node ../../scripts/generate-prisma.cjs",
     "db:migrate": "pnpm exec prisma migrate dev --schema=../../packages/database/prisma/schema.prisma",
     "db:seed": "pnpm exec tsx ../../packages/database/prisma/seed.ts",
     "db:push": "pnpm exec prisma db push --schema=../../packages/database/prisma/schema.prisma"

@@ -14,6 +14,8 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
         if (saved) setTheme(saved);
         else if (window.matchMedia('(prefers-color-scheme: light)').matches) setTheme('light');
         setMounted(true);
+        // Intentional: hydrate theme from storage on mount (single run)
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- initial sync from localStorage
     }, []);
 
     useEffect(() => {

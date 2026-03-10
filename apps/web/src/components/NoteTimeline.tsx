@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import s from '@/styles/shared.module.css';
 
 interface Note {
@@ -19,15 +19,15 @@ export default function NoteTimeline({ entityType, entityId }: NoteTimelineProps
     const [newNote, setNewNote] = useState('');
     const [saving, setSaving] = useState(false);
 
-    useEffect(() => {
-        loadNotes();
-    }, [entityType, entityId]);
-
-    function loadNotes() {
+    const loadNotes = useCallback(() => {
         fetch(`/api/notes?entityType=${entityType}&entityId=${entityId}`)
             .then(r => r.json())
             .then(setNotes);
-    }
+    }, [entityType, entityId]);
+
+    useEffect(() => {
+        loadNotes();
+    }, [loadNotes]);
 
     async function handleAdd() {
         if (!newNote.trim()) return;

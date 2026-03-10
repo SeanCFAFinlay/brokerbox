@@ -17,7 +17,7 @@ export function ActionItems({ items }: { items: ActionItem[] }) {
         return (
             <div className={s.empty}>
                 <div className={s.emptyIcon}><AlertCircle size={32} /></div>
-                <div className={s.emptyText}>You're all caught up!</div>
+                <div className={s.emptyText}>You&apos;re all caught up!</div>
                 <div className={s.emptySub}>No pending action items in your pipeline.</div>
             </div>
         );

@@ -1,5 +1,3 @@
-import { Prisma, Lender } from '@brokerbox/database';
-
 export interface MatchResult {
     lenderId: string;
     score: number;
@@ -7,9 +5,26 @@ export interface MatchResult {
     failures: string[];
 }
 
-type DealWithBorrower = Prisma.DealGetPayload<{ include: { borrower: true } }>;
+/** Minimal deal shape for matching (no @brokerbox/database dependency). */
+export interface DealWithBorrowerForMatch {
+    borrower?: { creditScore: number } | null;
+    ltv?: number | null;
+    loanAmount?: number;
+    propertyValue?: number;
+    propertyType?: string;
+}
 
-export function runMatch(deal: DealWithBorrower, lender: Lender): MatchResult {
+/** Minimal lender shape for matching. */
+export interface LenderForMatch {
+    id: string;
+    minCreditScore: number;
+    maxLTV: number;
+    minLoan: number;
+    maxLoan: number;
+    propertyTypes: string[];
+}
+
+export function runMatch(deal: DealWithBorrowerForMatch, lender: LenderForMatch): MatchResult {
     const failures: string[] = [];
     let score = 0;
 

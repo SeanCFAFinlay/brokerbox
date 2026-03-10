@@ -1,5 +1,3 @@
-import { PrismaClient } from '@brokerbox/database';
-
 export interface StorageConfig {
     provider: 'supabase' | 's3';
     bucket: string;
@@ -22,7 +20,14 @@ export async function uploadDocument(
     return fileUrl;
 }
 
-export async function getDealDocuments(prisma: PrismaClient, dealId: string) {
+/** Minimal type for doc lookup so utils does not depend on @brokerbox/database. */
+export interface DocRequestFinder {
+    docRequest: {
+        findMany: (args: { where: { dealId: string }; include: { files: true } }) => Promise<unknown>;
+    };
+}
+
+export async function getDealDocuments(prisma: DocRequestFinder, dealId: string) {
     return prisma.docRequest.findMany({
         where: { dealId },
         include: { files: true },
