@@ -1,4 +1,4 @@
-import { Deal, Lender } from '@brokerbox/database';
+import { Prisma, Lender } from '@brokerbox/database';
 
 export interface MatchResult {
     lenderId: string;
@@ -7,7 +7,9 @@ export interface MatchResult {
     failures: string[];
 }
 
-export function runMatch(deal: Partial<Deal>, lender: Lender): MatchResult {
+type DealWithBorrower = Prisma.DealGetPayload<{ include: { borrower: true } }>;
+
+export function runMatch(deal: DealWithBorrower, lender: Lender): MatchResult {
     const failures: string[] = [];
     let score = 0;
 
