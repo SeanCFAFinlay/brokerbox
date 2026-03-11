@@ -16,8 +16,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 9
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -28,5 +26,8 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
-      - name: Build web (with deps)
-        run: pnpm run build --filter=@brokerbox/web
+      - name: Build dependencies and web
+        run: |
+          pnpm --filter @brokerbox/domain run build
+          pnpm --filter @brokerbox/database run build
+          pnpm --filter @brokerbox/web run build

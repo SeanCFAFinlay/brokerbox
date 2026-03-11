@@ -17,7 +17,7 @@ For **Vercel team ownership** (STM TECH only, no personal/Hobby scope), **cleanu
 ## B. Build/CI fixes applied
 
 - **Git**: Staged and committed all previously uncommitted work (loading.tsx, error.tsx, api/schemas, docs, domain index/match/nba/revenue, vercel.json, .gitignore, PWA file churn, utils match removal). Ignored `packages/database/src/generated/` and `local_build_error.log` via `.gitignore`.
-- **vercel.json**: With Root Directory = `apps/web`, build uses `apps/web/vercel.json` (`cd ../.. && pnpm run build --filter=@brokerbox/web`). Turbo builds `@brokerbox/database` and `@brokerbox/domain` before `@brokerbox/web`; output stays in `apps/web/.next` (no copy).
+- **vercel.json**: With Root Directory = `apps/web`, build uses `apps/web/vercel.json`. Build command explicitly builds workspace dependencies (`@brokerbox/domain`, `@brokerbox/database`) then `@brokerbox/web` directly — bypassing `turbo run build` to avoid Vercel's Turbo Remote Cache intercepting the build and returning a 138ms cache-hit with no output files. Output stays in `apps/web/.next` (no copy).
 - **CI (`.github/workflows/web.yml`)**: Replaced `pnpm --dir apps/web build` with `pnpm run build --filter=@brokerbox/web` so the same dependency order runs in GitHub Actions. Aligned pnpm version with repo (9).
 - **Still required outside repo**: In Vercel dashboard, set env vars (e.g. `DATABASE_URL`) if the app uses DB at build or runtime. No code suppressions or fake fixes were added.
 
@@ -32,7 +32,7 @@ Use these in the Vercel project linked to **SeanCFAFinlay/brokerbox**:
 | **Framework Preset** | Next.js |
 | **Root Directory** | **`apps/web`** (required — so .next stays in app dir and paths resolve) |
 | **Install Command** | `pnpm install --no-frozen-lockfile` (Vercel runs from repo root) |
-| **Build Command** | From `apps/web/vercel.json`: `cd ../.. && pnpm run build --filter=@brokerbox/web` |
+| **Build Command** | From `apps/web/vercel.json`: `cd ../.. && pnpm --filter @brokerbox/domain run build && pnpm --filter @brokerbox/database run build && pnpm --filter @brokerbox/web run build` |
 | **Node.js Version** | 20 (`.node-version` in repo or Project Settings) |
 | **Production branch** | `main` |
 
@@ -98,7 +98,7 @@ git push origin main --force-with-lease
 
 2. **Don’t override Build Command in the dashboard**
    - With Root Directory = `apps/web`, the build command is read from **`apps/web/vercel.json`**:  
-     `cd ../.. && pnpm run build --filter=@brokerbox/web`
+     `cd ../.. && pnpm --filter @brokerbox/domain run build && pnpm --filter @brokerbox/database run build && pnpm --filter @brokerbox/web run build`
    - In **Settings → Build & Development**, leave **Build Command** empty (so Vercel uses the app’s `vercel.json`). If you set a custom build command, it must be exactly that.
 
 3. **Install Command**
@@ -117,6 +117,7 @@ git push origin main --force-with-lease
    - In your DNS provider: CNAME **brokerbox.ca** (or **www**) to **cname.vercel-dns.com** (or the value Vercel shows).
    - After DNS propagates, Vercel will serve the app at brokerbox.ca.
 
-7. **Build fails after "Packages in scope"**
-   - The build command disables Turbo telemetry (`TURBO_TELEMETRY_DISABLED=1`). Ensure **Node.js Version** is **20** in Project Settings.
-   - If it still fails, copy the **full error** from the Vercel build log (the red lines after the Turbo step) to debug Prisma, Next.js, or memory issues.
+7. **Build completes in < 1 second with no output ("Detected Turbo. Adjusting default settings")**
+   - Vercel detected `turbo.json` and enabled Turbo Remote Cache. When the cache has a hit for the current commit, `turbo run build` replays the cached output without writing files to disk, so `apps/web/.next` is empty and nothing is deployed.
+   - **Fix already applied**: `apps/web/vercel.json` now uses explicit per-package `pnpm --filter` commands (not `turbo run build`) so each build step always runs fresh and files are always written locally.
+   - If you see this again, ensure no dashboard override is re-introducing a `turbo run build` or root-level `pnpm run build --filter=...` call in place of the explicit per-package `pnpm --filter <pkg> run build` commands.

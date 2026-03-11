@@ -1,5 +1,5 @@
 {
   "framework": "nextjs",
-  "buildCommand": "cd ../.. && TURBO_TELEMETRY_DISABLED=1 pnpm run build --filter=@brokerbox/web",
+  "buildCommand": "cd ../.. && pnpm --filter @brokerbox/domain run build && pnpm --filter @brokerbox/database run build && pnpm --filter @brokerbox/web run build",
   "installCommand": "cd ../.. && pnpm install --no-frozen-lockfile"
 }
