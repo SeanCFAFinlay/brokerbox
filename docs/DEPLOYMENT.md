@@ -116,3 +116,7 @@ git push origin main --force-with-lease
    - **Settings → Domains**: add **brokerbox.ca**, assign to **Production**.
    - In your DNS provider: CNAME **brokerbox.ca** (or **www**) to **cname.vercel-dns.com** (or the value Vercel shows).
    - After DNS propagates, Vercel will serve the app at brokerbox.ca.
+
+7. **Build fails after "Packages in scope"**
+   - The build command disables Turbo telemetry (`TURBO_TELEMETRY_DISABLED=1`). Ensure **Node.js Version** is **20** in Project Settings.
+   - If it still fails, copy the **full error** from the Vercel build log (the red lines after the Turbo step) to debug Prisma, Next.js, or memory issues.
