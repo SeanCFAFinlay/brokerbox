@@ -1,5 +1,7 @@
 # BrokerBox – GitHub & Vercel deployment (brokerbox.ca)
 
+For **Vercel team ownership** (STM TECH only, no personal/Hobby scope), **cleanup steps**, and **404-at-/ troubleshooting**, see **[VERCEL-OWNERSHIP-AND-CLEANUP.md](./VERCEL-OWNERSHIP-AND-CLEANUP.md)**.
+
 ## A. Repo audit result
 
 | Item | Value |
