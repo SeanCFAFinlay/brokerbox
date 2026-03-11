@@ -49,3 +49,5 @@ local_build_error.log
 packages/database/.turbo/
 packages/database/src/generated/
 apps/web/.next/
+apps/web/public/sw.js
+apps/web/public/fallback-*.js

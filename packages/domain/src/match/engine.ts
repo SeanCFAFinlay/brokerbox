@@ -54,7 +54,9 @@ export function runMatch(
     if (!lender.supportedProvinces.includes(borrower.province)) {
       failures.push(`Province ${borrower.province} not supported`);
     }
-    if (!lender.propertyTypes.includes(deal.propertyType)) {
+    if (deal.propertyType == null || deal.propertyType === '') {
+      failures.push('Property type not specified');
+    } else if (!lender.propertyTypes.includes(deal.propertyType)) {
       failures.push(`Property type ${deal.propertyType} not supported`);
     }
     if (!lender.positionTypes.includes(deal.position)) {

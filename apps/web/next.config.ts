@@ -12,6 +12,7 @@ const withPWA = withPWAInit({
   },
 });
 
+const monorepoRoot = path.join(process.cwd(), "../..");
 const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: false,
@@ -19,8 +20,12 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true, // TODO: fix no-explicit-any and other lint, then set to false
   },
-  outputFileTracingRoot: path.join(process.cwd(), "../../"),
+  outputFileTracingRoot: monorepoRoot,
   serverExternalPackages: ["@prisma/client", "prisma"],
+  // Include Prisma generated client (and engine binary) in serverless trace (monorepo)
+  outputFileTracingIncludes: {
+    "/**": ["../../packages/database/src/generated/client/**"],
+  },
 };
 
 export default withPWA(nextConfig);

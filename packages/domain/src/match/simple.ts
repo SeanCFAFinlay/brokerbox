@@ -40,7 +40,9 @@ export function runMatchDealLender(
     }
   }
 
-  if (deal.propertyType != null && !lender.propertyTypes.includes(deal.propertyType)) {
+  if (deal.propertyType == null || deal.propertyType === '') {
+    failures.push('Property type not specified');
+  } else if (!lender.propertyTypes.includes(deal.propertyType)) {
     failures.push(`Property type ${deal.propertyType} not supported by lender`);
   } else {
     score += 25;
