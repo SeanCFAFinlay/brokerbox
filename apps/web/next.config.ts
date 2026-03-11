@@ -20,6 +20,7 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true, // TODO: fix no-explicit-any and other lint, then set to false
   },
   outputFileTracingRoot: path.join(process.cwd(), "../../"),
+  serverExternalPackages: ["@prisma/client", "prisma"],
 };
 
 export default withPWA(nextConfig);
