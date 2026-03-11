@@ -11,7 +11,9 @@ export function runMatchDealLender(
   const failures: string[] = [];
   let score = 0;
 
-  if (deal.borrower?.creditScore != null && deal.borrower.creditScore < lender.minCreditScore) {
+  if (deal.borrower == null || deal.borrower.creditScore == null) {
+    failures.push('Borrower or credit score not specified');
+  } else if (deal.borrower.creditScore < lender.minCreditScore) {
     failures.push(
       `Credit score ${deal.borrower.creditScore} below lender minimum ${lender.minCreditScore}`
     );
@@ -19,12 +21,12 @@ export function runMatchDealLender(
     score += 25;
   }
 
-  const dealLTV =
-    deal.ltv ??
-    (deal.loanAmount != null && deal.propertyValue != null && deal.propertyValue > 0
-      ? (deal.loanAmount / deal.propertyValue) * 100
-      : 0);
-  if (dealLTV > lender.maxLTV) {
+  const canComputeLTV =
+    deal.loanAmount != null && deal.propertyValue != null && deal.propertyValue > 0;
+  const dealLTV = deal.ltv ?? (canComputeLTV ? (deal.loanAmount! / deal.propertyValue!) * 100 : null);
+  if (dealLTV == null) {
+    failures.push('LTV cannot be computed: loan amount or property value missing');
+  } else if (dealLTV > lender.maxLTV) {
     failures.push(`LTV ${dealLTV.toFixed(2)}% exceeds lender maximum ${lender.maxLTV}%`);
   } else {
     score += 25;
