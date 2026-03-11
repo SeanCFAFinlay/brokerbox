@@ -31,10 +31,13 @@ fs.writeFileSync(path.join(tmpDir, 'package.json'), JSON.stringify(pkgJson, null
 execSync('npm install --silent', { cwd: tmpDir, stdio: 'inherit' });
 
 // Use the Prisma we just installed in tmpDir (not workspace npx)
+// Prisma generate requires DATABASE_URL in schema; use placeholder if unset (e.g. Vercel build before env is set)
+const env = { ...process.env };
+if (!env.DATABASE_URL) env.DATABASE_URL = 'postgresql://build:build@localhost:5432/build';
 const prismaCli = path.join(tmpDir, 'node_modules', 'prisma', 'build', 'index.js');
 execSync(`node "${prismaCli}" generate --schema="${schemaPath}"`, {
   cwd: tmpDir,
-  env: { ...process.env },
+  env,
   stdio: 'inherit',
 });
 

@@ -25,34 +25,17 @@
 
 Use these in the Vercel project linked to **SeanCFAFinlay/brokerbox**:
 
-### Recommended: Root Directory = apps/web (monorepo)
-
 | Setting | Value |
 |--------|--------|
 | **Framework Preset** | Next.js |
-| **Root Directory** | `apps/web` **(required)** |
-| **Install Command** | `pnpm install --no-frozen-lockfile` (runs from repo root automatically) |
-| **Build Command** | *(from `apps/web/vercel.json`)* `cd ../.. && pnpm run build --filter=@brokerbox/web` |
-| **Output Directory** | *(default; .next inside apps/web)* |
-| **Node.js Version** | 20.x (Project Settings → General) |
+| **Root Directory** | **Leave empty** (repo root). Do not set to apps/web. |
+| **Install Command** | `pnpm install --no-frozen-lockfile` (from root `vercel.json`) |
+| **Build Command** | From root `vercel.json`: `pnpm run build --filter=@brokerbox/web && mkdir -p .next && cp -r apps/web/.next/. .next/` |
+| **Node.js Version** | 20 (use `.node-version` in repo or Project Settings → General) |
 | **Production branch** | `main` |
 
-- With **Root Directory** = `apps/web`, Vercel installs from repo root then builds from `apps/web`; `apps/web/vercel.json` runs the monorepo build so `@brokerbox/database` and `@brokerbox/domain` build before the Next app.
-- **Include source files outside Root Directory**: leave enabled (default) so workspace packages are available.
-
-### Alternative: Root Directory empty (repo root)
-
-| Setting | Value |
-|--------|--------|
-| **Root Directory** | *(leave blank)* |
-| **Install Command** | `pnpm install --no-frozen-lockfile` |
-| **Build Command** | `pnpm run build --filter=@brokerbox/web && mkdir -p .next && cp -r apps/web/.next/. .next/` |
-
-- Root `vercel.json` defines this. Output `.next` is copied to repo root so Vercel finds it.
-
-### Environment variables (required)
-
-- **DATABASE_URL**: Required for **Build** (Prisma generate) and **Production** (runtime). Use a real PostgreSQL URL for production. For build-only you can use a placeholder (e.g. `postgresql://u:p@localhost:5432/dummy`) if the app does not need DB at build.
+- Build runs from repo root: Turbo builds `@brokerbox/database`, `@brokerbox/domain`, then `@brokerbox/web`; output is copied to `.next` at root so Vercel serves the app.
+- **DATABASE_URL**: Not required for build (Prisma generate uses a placeholder if unset). **Required for Production** (runtime) — set your PostgreSQL URL in Environment Variables for Production (and Preview if you need DB there).
 - Optional: **AZURE_CLIENT_ID**, **AZURE_CLIENT_SECRET**, **AZURE_REDIRECT_URI** for Outlook auth.
 
 ---
@@ -88,14 +71,13 @@ git push origin main --force-with-lease
 
 ## E. Vercel checklist for brokerbox.ca
 
-1. **Project**: Vercel project is connected to GitHub repo **SeanCFAFinlay/brokerbox**.
-2. **Production branch**: Set to **main** (Settings → Git).
-3. **Root Directory**: Set to **`apps/web`** (Settings → General). This makes the build use `apps/web/vercel.json` and keeps the Next app and its `.next` output in one place.
-4. **Install Command**: Override to `pnpm install --no-frozen-lockfile` (Vercel runs it from repo root when Root Directory is set).
-5. **Node**: Set Node.js version to **20** (Project Settings → General).
-6. **Domain**: Add **brokerbox.ca** (Settings → Domains) and assign it to **Production**. Point DNS for brokerbox.ca to Vercel (e.g. CNAME to `cname.vercel-dns.com`).
-7. **Env**: Add **DATABASE_URL** for **Build**, **Preview**, and **Production** (PostgreSQL connection string). Without it, Prisma generate fails at build and the app cannot connect at runtime.
-8. **Deploy**: Push to **main** or trigger a redeploy. After the build succeeds, brokerbox.ca will serve the latest deployment.
+1. **Project**: Connected to GitHub repo **SeanCFAFinlay/brokerbox**.
+2. **Production branch**: **main** (Settings → Git).
+3. **Root Directory**: **Leave empty** (repo root). Do not set to apps/web.
+4. **Node**: Set Node.js version to **20** (Project Settings → General; repo has `.node-version`).
+5. **Domain**: Add **brokerbox.ca** (Settings → Domains) → Production. Point DNS to Vercel (e.g. CNAME to `cname.vercel-dns.com`).
+6. **Env**: Add **DATABASE_URL** for **Production** (and Preview if needed). PostgreSQL URL. Build works without it (placeholder used for Prisma generate); runtime needs the real URL.
+7. **Deploy**: Push to **main** or redeploy. Build uses root `vercel.json`; after success, brokerbox.ca serves the app.
 
 **Target mapping**
 

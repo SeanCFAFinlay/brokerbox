@@ -1,3 +1,0 @@
-{
-  "buildCommand": "cd ../.. && pnpm run build --filter=@brokerbox/web"
-}
