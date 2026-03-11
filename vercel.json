@@ -1,6 +1,6 @@
 {
   "framework": "nextjs",
   "installCommand": "pnpm install --no-frozen-lockfile",
-  "buildCommand": "pnpm run build --filter=@brokerbox/web",
+  "buildCommand": "pnpm --filter @brokerbox/domain run build && pnpm --filter @brokerbox/database run build && pnpm --filter @brokerbox/web run build",
   "outputDirectory": "apps/web/.next"
 }
