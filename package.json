@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
+    "vercel-build": "pnpm run build --filter=@brokerbox/web",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "db:generate": "pnpm --dir apps/web exec prisma generate --schema=../../packages/database/prisma/schema.prisma",

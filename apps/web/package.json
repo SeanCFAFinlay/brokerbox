@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "db:generate": "node ../../scripts/generate-prisma.cjs",
     "db:migrate": "pnpm exec prisma migrate dev --schema=../../packages/database/prisma/schema.prisma",

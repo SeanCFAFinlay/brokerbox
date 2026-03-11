@@ -13,6 +13,7 @@
   },
   "scripts": {
     "build": "node ../../scripts/generate-prisma.cjs && tsc",
+    "typecheck": "node ../../scripts/generate-prisma.cjs && tsc --noEmit",
     "dev": "tsc -w",
     "db:generate": "node ../../scripts/generate-prisma.cjs",
     "db:push": "prisma db push --schema=./prisma/schema.prisma"
