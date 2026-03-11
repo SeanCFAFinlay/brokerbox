@@ -12,7 +12,7 @@
     }
   },
   "scripts": {
-    "build": "node ../../scripts/generate-prisma.cjs && tsc",
+    "build": "prisma generate --schema=./prisma/schema.prisma && tsc",
     "dev": "tsc -w",
     "db:generate": "node ../../scripts/generate-prisma.cjs",
     "db:push": "prisma db push --schema=./prisma/schema.prisma"
