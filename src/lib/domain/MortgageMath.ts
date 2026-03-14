@@ -64,3 +64,54 @@ export function calculateLenderROI(input: {
 export function calculateInterestHoldback(loanAmount: number, interestRate: number, months: number): number {
     return (loanAmount * (interestRate / 100)) * (months / 12);
 }
+
+// Dashboard Utilities
+export function pipelineVolume(deals: any[]): number {
+    return deals
+        .filter(d => ['intake', 'in_review', 'matched', 'committed'].includes(d.stage))
+        .reduce((sum, d) => sum + (d.loanAmount || 0), 0);
+}
+
+export function fundedVolume(deals: any[]): number {
+    return deals
+        .filter(d => d.stage === 'funded')
+        .reduce((sum, d) => sum + (d.loanAmount || 0), 0);
+}
+
+export function closeRate(deals: any[]): number {
+    const funded = deals.filter(d => d.stage === 'funded').length;
+    const total = deals.filter(d => ['funded', 'declined', 'archived'].includes(d.stage)).length;
+    return total > 0 ? (funded / total) * 100 : 0;
+}
+
+export function avgDaysToFund(deals: any[]): number {
+    const fundedDeals = deals.filter(d => d.stage === 'funded' && d.fundingDate && d.createdAt);
+    if (fundedDeals.length === 0) return 0;
+    const totalDays = fundedDeals.reduce((sum, d) => {
+        const start = new Date(d.createdAt).getTime();
+        const end = new Date(d.fundingDate).getTime();
+        return sum + (end - start) / (1000 * 60 * 60 * 24);
+    }, 0);
+    return totalDays / fundedDeals.length;
+}
+
+export function fundedCount(deals: any[]): number {
+    return deals.filter(d => d.stage === 'funded').length;
+}
+
+export function getNextBestActions(borrowers: any[], deals: any[], tasks: any[], docs: any[]) {
+    const actions: any[] = [];
+    
+    // Logic for NBA
+    deals.filter(d => d.stage === 'intake').forEach(d => {
+        actions.push({
+            type: 'deal_stalled',
+            title: 'File in Intake',
+            reason: 'Needs to be moved to Review',
+            entityId: d.id,
+            href: `/deals/${d.id}`
+        });
+    });
+
+    return actions;
+}

@@ -1,8 +1,0 @@
-
-> brokerbox@ build C:\Users\sean\BBBUILDOUT\brokerbox
-> turbo run build "--filter" "@brokerbox/web"
-
-ΓÇó turbo 2.8.14
-  x No package found with name '@brokerbox/web' in workspace
-
-ΓÇëELIFECYCLEΓÇë Command failed with exit code 1.

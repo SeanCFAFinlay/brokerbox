@@ -9,10 +9,10 @@ export default function MainLayout({ children, userId = "demo" }: { children: Re
     return (
         <div style={{ display: 'flex', minHeight: '100vh', position: 'relative' }}>
             <Sidebar />
-            <main className="main-content">
-                <header className="main-header">
+            <main className={s.mainContent}>
+                <header className={s.header}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                        <button className="hamburger" onClick={toggle}>☰</button>
+                        <button className={s.hamburger} onClick={toggle}>☰</button>
                         <h1 style={{ fontSize: 18, margin: 0, fontWeight: 700 }}>BrokerBox</h1>
                     </div>
                     <NotificationBell userId={userId} />

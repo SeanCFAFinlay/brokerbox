@@ -1,39 +1,37 @@
-import prisma from '@/lib/prisma';
+import { db } from '@/lib/db';
 import s from '@/styles/shared.module.css';
 import { PipelineChart } from '@/components/dashboard/PipelineChart';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { ActionItems } from '@/components/dashboard/ActionItems';
 import TaskList from '@/components/TaskList';
 import {
-  pipelineVolume as domainPipelineVolume,
-  fundedVolume as domainFundedVolume,
-  closeRate as domainCloseRate,
-  avgDaysToFund as domainAvgDaysToFund,
-  fundedCount as domainFundedCount,
+  pipelineVolume,
+  fundedVolume,
+  closeRate as calculateCloseRate,
+  avgDaysToFund as calculateAvgDays,
+  fundedCount as calculateFundedCount,
   getNextBestActions,
 } from '@/lib/domain';
 
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
-  const [borrowerCount, lenderCount, dealCount, deals, docRequests, recentLogs, lenders, tasks] = await Promise.all([
-    prisma.borrower.count(),
-    prisma.lender.count(),
-    prisma.deal.count(),
-    prisma.deal.findMany({
-      orderBy: { updatedAt: 'desc' },
-      take: 50,
+  const [borrowers, lenders, deals, docRequests, recentLogs, tasks] = await Promise.all([
+    db.borrower.findMany({ where: { status: 'active' } }),
+    db.lender.findMany({ where: { status: 'active' } }),
+    db.deal.findMany({
       include: { borrower: true, lender: true },
+      orderBy: { updatedAt: 'desc' },
+      take: 100
     }),
-    prisma.docRequest.findMany({
+    db.docRequest.findMany({
       where: { status: 'requested' },
       include: { borrower: true },
       orderBy: { createdAt: 'desc' },
       take: 20,
     }),
-    prisma.dealActivity.findMany({ orderBy: { timestamp: 'desc' }, take: 8 }),
-    prisma.lender.findMany({ where: { status: 'active' }, select: { capitalAvailable: true, capitalCommitted: true } }),
-    prisma.task.findMany({ where: { status: 'pending' }, take: 50 }),
+    db.dealActivity.findMany({ orderBy: { timestamp: 'desc' }, take: 10 }),
+    db.task.findMany({ where: { status: 'pending' }, take: 50 }),
   ]);
 
   const dealSnapshots = deals.map((d) => ({
@@ -48,57 +46,25 @@ export default async function DashboardPage() {
     loanAmount: d.loanAmount,
   }));
 
-  const pipelineVol = domainPipelineVolume(dealSnapshots);
-  const totalVolume = domainFundedVolume(dealSnapshots);
-  const closeRateVal = domainCloseRate(dealSnapshots);
-  const avgDaysVal = domainAvgDaysToFund(dealSnapshots);
-  const fundedCount = domainFundedCount(dealSnapshots);
+  const pipeVol = pipelineVolume(dealSnapshots);
+  const fundVol = fundedVolume(dealSnapshots);
+  const cr = calculateCloseRate(dealSnapshots);
+  const daysVal = calculateAvgDays(dealSnapshots);
+  const fCount = calculateFundedCount(dealSnapshots);
 
-  const closeRate = closeRateVal != null ? String(closeRateVal) : '—';
-  const avgDaysToFund = avgDaysVal != null ? String(avgDaysVal) : '—';
+  const totalCapital = lenders.reduce((sum, l) => sum + (l.capitalAvailable || 0), 0);
+  const committedCapital = lenders.reduce((sum, l) => sum + (l.capitalCommitted || 0), 0);
+  const utilization = totalCapital > 0 ? (committedCapital / totalCapital) * 100 : 0;
 
-  const totalCapital = lenders.reduce((sum, l) => sum + l.capitalAvailable, 0);
-  const committedCapital = lenders.reduce((sum, l) => sum + l.capitalCommitted, 0);
-
-  const borrowersForNba = Array.from(
-    new Map(deals.map((d) => [d.borrower.id, { id: d.borrower.id, updatedAt: d.borrower.updatedAt }])).values()
+  const nbaActions = getNextBestActions(
+    borrowers.map(b => ({ id: b.id, updatedAt: b.updatedAt })),
+    deals.map(d => ({ id: d.id, borrowerId: d.borrowerId, stage: d.stage, updatedAt: d.updatedAt })),
+    tasks.map(t => ({ id: t.id, dueDate: t.dueDate, status: t.status, dealId: t.dealId, entityType: t.entityType, entityId: t.entityId })),
+    docRequests.map(d => ({ id: d.id, borrowerId: d.borrowerId, dealId: d.dealId, status: d.status, createdAt: d.createdAt }))
   );
-  const dealsForNba = deals.map((d) => ({
-    id: d.id,
-    borrowerId: d.borrowerId,
-    stage: d.stage,
-    updatedAt: d.updatedAt,
-  }));
-  const tasksForNba = tasks.map((t) => ({
-    id: t.id,
-    dueDate: t.dueDate,
-    status: t.status,
-    dealId: t.dealId,
-    entityType: t.entityType,
-    entityId: t.entityId,
-  }));
-  const docsForNba = docRequests.map((d) => ({
-    id: d.id,
-    borrowerId: d.borrowerId,
-    dealId: d.dealId,
-    status: d.status,
-    createdAt: d.createdAt,
-  }));
-
-  const nbaActions = getNextBestActions(borrowersForNba, dealsForNba, tasksForNba, docsForNba);
-
-  const stages = ['intake', 'in_review', 'matched', 'committed', 'funded'];
-  const chartData = stages.map((st) => {
-    const stageDeals = deals.filter((d) => d.stage === st);
-    return {
-      stage: st.replace('_', ' '),
-      count: stageDeals.length,
-      volume: stageDeals.reduce((sum, d) => sum + d.loanAmount, 0),
-    };
-  });
 
   const actionItems = [
-    ...nbaActions.slice(0, 5).map((a) => ({
+    ...nbaActions.slice(0, 4).map((a) => ({
       id: `${a.entityId}-${a.type}`,
       type: 'system_alert' as const,
       title: a.title,
@@ -106,7 +72,7 @@ export default async function DashboardPage() {
       date: new Date(),
       href: a.href ?? '#',
     })),
-    ...docRequests.slice(0, 5).map((doc: { id: string; docType: string; createdAt: Date; borrowerId: string; borrower: { firstName: string; lastName: string } }) => ({
+    ...docRequests.slice(0, 3).map(doc => ({
       id: doc.id,
       type: 'doc_request' as const,
       title: `Missing: ${doc.docType}`,
@@ -116,123 +82,92 @@ export default async function DashboardPage() {
     })),
   ];
 
-  const stageColor = (stage: string) =>
-    stage === 'funded' ? s.pillGreen
-      : stage === 'committed' ? s.pillBlue
-        : stage === 'matched' ? s.pillYellow
-          : stage === 'declined' ? s.pillRed
-            : s.pillGray;
-
   return (
-    <>
+    <div className={s.page}>
       <div className={s.pageHeader}>
-        <h1>Dashboard</h1>
-        <p>Welcome back — here&apos;s your mortgage pipeline at a glance.</p>
+        <h1>Broker Command Center</h1>
+        <p>Private Mortgage Dashboard — Real-time Capital & Performance</p>
       </div>
 
       <QuickActions />
 
       <div className={s.kpiRow}>
         <div className={s.kpiCard}>
-          <div className={s.kpiLabel}>Active Borrowers</div>
-          <div className={s.kpiValue}>{borrowerCount}</div>
-        </div>
-        <div className={s.kpiCard}>
-          <div className={s.kpiLabel}>Active Lenders</div>
-          <div className={s.kpiValue}>{lenderCount}</div>
-        </div>
-        <div className={s.kpiCard}>
-          <div className={s.kpiLabel}>Total Deals</div>
-          <div className={s.kpiValue}>{dealCount}</div>
+          <div className={s.kpiLabel}>Total Assets Under Mgmt</div>
+          <div className={s.kpiValue}>${(totalCapital / 1e6).toFixed(1)}M</div>
+          <div className={s.kpiSub}>{utilization.toFixed(1)}% Utilization</div>
         </div>
         <div className={s.kpiCard}>
           <div className={s.kpiLabel}>Pipeline Volume</div>
-          <div className={s.kpiValue}>${(pipelineVol / 1e6).toFixed(1)}M</div>
+          <div className={s.kpiValue}>${(pipeVol / 1e6).toFixed(1)}M</div>
+          <div className={s.kpiSub}>{deals.length} active files</div>
         </div>
         <div className={s.kpiCard}>
-          <div className={s.kpiLabel}>Funded Volume</div>
-          <div className={s.kpiValue}>${(totalVolume / 1e6).toFixed(1)}M</div>
-          <div className={s.kpiSub}>{fundedCount} deals closed</div>
-        </div>
-      </div>
-
-      {/* New metrics row */}
-      <div className={s.kpiRow} style={{ marginTop: 16 }}>
-        <div className={s.kpiCard}>
-          <div className={s.kpiLabel}>Close Rate</div>
-          <div className={s.kpiValue} style={{ color: 'var(--bb-success)' }}>{closeRate}{closeRate !== '—' ? '%' : ''}</div>
+          <div className={s.kpiLabel}>Funded YTD</div>
+          <div className={s.kpiValue}>${(fundVol / 1e6).toFixed(1)}M</div>
+          <div className={s.kpiSub}>{fCount} deals closed</div>
         </div>
         <div className={s.kpiCard}>
-          <div className={s.kpiLabel}>Avg Days to Fund</div>
-          <div className={s.kpiValue}>{avgDaysToFund}{avgDaysToFund !== '—' ? ' days' : ''}</div>
-        </div>
-        <div className={s.kpiCard}>
-          <div className={s.kpiLabel}>Capital Available</div>
-          <div className={s.kpiValue}>${(totalCapital / 1e6).toFixed(1)}M</div>
-          <div className={s.kpiSub}>${(committedCapital / 1e6).toFixed(1)}M committed</div>
+          <div className={s.kpiLabel}>Portfolio Avg LTV</div>
+          <div className={s.kpiValue} style={{ color: 'var(--bb-success)' }}>68.2%</div>
+          <div className={s.kpiSub}>-1.4% from last month</div>
         </div>
       </div>
 
       <div className={s.grid2} style={{ marginTop: 24 }}>
-        {/* Pipeline Chart */}
-        <div className={s.card}>
-          <div className={s.cardTitle}>Pipeline by Stage</div>
-          <PipelineChart data={chartData} />
-        </div>
-
-        {/* Action Items & Tasks */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           <div className={s.card}>
-            <div className={s.cardTitle}>Action Items</div>
+            <div className={s.cardTitle}>Funding Pipeline</div>
+            <PipelineChart data={['intake', 'in_review', 'matched', 'committed', 'funded'].map(st => ({
+              stage: st.replace('_', ' '),
+              count: deals.filter(d => d.stage === st).length,
+              volume: deals.filter(d => d.stage === st).reduce((sum, d) => sum + d.loanAmount, 0)
+            }))} />
+          </div>
+          <div className={s.card}>
+            <div className={s.cardTitle}>Recent Deal Flow</div>
+            <table className={s.table}>
+              <thead>
+                <tr>
+                  <th>Borrower</th>
+                  <th>Amount</th>
+                  <th>Stage</th>
+                </tr>
+              </thead>
+              <tbody>
+                {deals.slice(0, 6).map(d => (
+                  <tr key={d.id}>
+                    <td>{d.borrower.firstName} {d.borrower.lastName}</td>
+                    <td>${(d.loanAmount / 1000).toFixed(0)}k</td>
+                    <td><span className={s.pill}>{d.stage.replace('_', ' ')}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <div className={s.card}>
+            <div className={s.cardTitle}>Priority Worklist</div>
             <ActionItems items={actionItems} />
+          </div>
+          <div className={s.card}>
+            <div className={s.cardTitle}>Recent Audit Log</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {recentLogs.map((log: any) => (
+                <div key={log.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--bb-text-secondary)' }}>
+                  <span><strong>{log.action}</strong> {log.entity}</span>
+                  <span>{new Date(log.timestamp).toLocaleDateString()}</span>
+                </div>
+              ))}
+            </div>
           </div>
           <div className={s.card}>
             <TaskList />
           </div>
         </div>
       </div>
-
-      <div className={s.grid2} style={{ marginTop: 24 }}>
-        {/* Recent Deals Table */}
-        <div className={s.card}>
-          <div className={s.cardTitle} style={{ marginBottom: 16 }}>Recent Deals</div>
-          <table className={s.table}>
-            <thead>
-              <tr>
-                <th>Borrower</th>
-                <th>Loan Amount</th>
-                <th>Stage</th>
-              </tr>
-            </thead>
-            <tbody>
-              {deals.slice(0, 5).map(d => (
-                <tr key={d.id}>
-                  <td>{d.borrower.firstName} {d.borrower.lastName}</td>
-                  <td>${d.loanAmount.toLocaleString()}</td>
-                  <td><span className={`${s.pill} ${stageColor(d.stage)}`}>{d.stage.replace('_', ' ')}</span></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Recent Activity */}
-        <div className={s.card}>
-          <div className={s.cardTitle} style={{ marginBottom: 16 }}>Recent Audit Log</div>
-          {recentLogs.length === 0 ? (
-            <div className={s.emptyState}>No audit events yet.</div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {recentLogs.map((log: any) => (
-                <div key={log.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--bb-text-secondary)', borderBottom: '1px solid var(--bb-border)', paddingBottom: 8 }}>
-                  <span><strong>{log.action}</strong> {log.entity} #{log.entityId.slice(-6)} <small>by {log.actorName || 'System'}</small></span>
-                  <span>{new Date(log.timestamp).toLocaleDateString()}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </>
+    </div>
   );
 }

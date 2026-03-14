@@ -36,6 +36,7 @@ export default function Sidebar() {
                         <span className={styles.logoText}>BrokerBox</span>
                     </div>
                     <button className={styles.closeBtn} onClick={close}>✕</button>
+                    <button className={styles.closeBtn} onClick={close}>✕</button>
                 </div>
 
                 <nav className={styles.nav}>

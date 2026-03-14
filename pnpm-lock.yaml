@@ -4,6 +4,10 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@types/react': 18.2.0
+  '@types/react-dom': 18.2.0
+
 importers:
 
   .:
@@ -13,16 +17,16 @@ importers:
         version: 5.22.0(prisma@5.22.0)
       lucide-react:
         specifier: ^0.263.1
-        version: 0.263.1(react@18.3.1)
+        version: 0.263.1(react@18.2.0)
       next:
         specifier: 14.1.0
-        version: 14.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 14.1.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       react:
-        specifier: ^18
-        version: 18.3.1
+        specifier: 18.2.0
+        version: 18.2.0
       react-dom:
-        specifier: ^18
-        version: 18.3.1(react@18.3.1)
+        specifier: 18.2.0
+        version: 18.2.0(react@18.2.0)
       zod:
         specifier: ^3.22.2
         version: 3.25.76
@@ -31,11 +35,11 @@ importers:
         specifier: ^20
         version: 20.19.37
       '@types/react':
-        specifier: ^18
-        version: 18.3.28
+        specifier: 18.2.0
+        version: 18.2.0
       '@types/react-dom':
-        specifier: ^18
-        version: 18.3.7(@types/react@18.3.28)
+        specifier: 18.2.0
+        version: 18.2.0
       eslint:
         specifier: ^8
         version: 8.57.1
@@ -2689,10 +2693,8 @@ packages:
   '@types/prop-types@15.7.15':
     resolution: {integrity: sha512-F6bEyamV9jKGAFBEmlQnesRPGOQqS2+Uwi0Em15xenOxHaf2hv6L8YCVn3rPdPJOiJfPiCnLIRyvwVaqMY3MIw==}
 
-  '@types/react-dom@18.3.7':
-    resolution: {integrity: sha512-MEe3UeoENYVFXzoXEWsvcpg6ZvlrFNlOQ7EOsvhI3CfAXwzPfO8Qwuxd40nepsYKqyyVQnTdEfv68q91yLcKrQ==}
-    peerDependencies:
-      '@types/react': ^18.0.0
+  '@types/react-dom@18.2.0':
+    resolution: {integrity: sha512-8yQrvS6sMpSwIovhPOwfyNf2Wz6v/B62LFSVYQ85+Rq3tLsBIG7rP5geMxaijTUxSkrO6RzN/IRuIAADYQsleA==}
 
   '@types/react-dom@19.2.3':
     resolution: {integrity: sha512-jp2L/eY6fn+KgVVQAOqYItbF0VY/YApe5Mz2F0aykSO8gx31bYCZyvSeYxCHKvzHG5eZjc+zyaS5BrBWya2+kQ==}
@@ -2711,6 +2713,9 @@ packages:
     peerDependencies:
       '@types/react': '*'
 
+  '@types/react@18.2.0':
+    resolution: {integrity: sha512-0FLj93y5USLHdnhIhABk83rm8XEGA7kH3cr+YUlvxoUGp1xNt/DINUMvqPxLyOQMzLmZe8i4RTHbvb8MC7NmrA==}
+
   '@types/react@18.3.28':
     resolution: {integrity: sha512-z9VXpC7MWrhfWipitjNdgCauoMLRdIILQsAEV+ZesIzBq/oUlxk0m3ApZuMFCXdnS4U7KrI+l3WRUEGQ8K1QKw==}
 
@@ -2719,6 +2724,9 @@ packages:
 
   '@types/resolve@1.17.1':
     resolution: {integrity: sha512-yy7HuzQhj0dhGpD8RLXSZWEkLsV9ibvxvi6EiJ3bkqLAO1RGo0WbkWQiwpRlSFymTJRz0d3k5LM3kkx8ArDbLw==}
+
+  '@types/scheduler@0.26.0':
+    resolution: {integrity: sha512-WFHp9YUJQ6CKshqoC37iOlHnQSmxNc795UhB26CyBBttrN9svdIrUjl/NjnNmfcwtncN0h/0PPAFWv9ovP8mLA==}
 
   '@types/stack-utils@2.0.3':
     resolution: {integrity: sha512-9aEbYZ3TbYMznPdcdr3SmIrLXwC/AKZXQeCf9Pgao5CKb8CyHuEX5jzWPTkvregvhRJHcpRO6BFoGW9ycaOkYw==}
@@ -5910,10 +5918,10 @@ packages:
   react-devtools-core@6.1.5:
     resolution: {integrity: sha512-ePrwPfxAnB+7hgnEr8vpKxL9cmnp7F322t8oqcPshbIQQhDKgFDW4tjhF2wjVbdXF9O/nyuy3sQWd9JGpiLPvA==}
 
-  react-dom@18.3.1:
-    resolution: {integrity: sha512-5m4nQKp+rZRb09LNH59GM4BxTh9251/ylbKIbpe7TpGxfJ+9kv6BLkLBXIjjspbgbnIBNqlI23tRnTWT0snUIw==}
+  react-dom@18.2.0:
+    resolution: {integrity: sha512-6IMTriUmvsjHUjNtEDudZfuDQUoWXVxKHhlEGSk81n4YFS+r/Kl99wXiwlVXtPBtJenozv2P+hxDsw9eA7Xo6g==}
     peerDependencies:
-      react: ^18.3.1
+      react: ^18.2.0
 
   react-dom@19.0.0:
     resolution: {integrity: sha512-4GV5sHFG0e/0AD4X+ySy6UJd3jVl1iNsNHdpad0qhABJ11twS3TTBnseqsKurKcsNqCEFeGL3uLpVChpIO3QfQ==}
@@ -6107,8 +6115,8 @@ packages:
       '@types/react':
         optional: true
 
-  react@18.3.1:
-    resolution: {integrity: sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==}
+  react@18.2.0:
+    resolution: {integrity: sha512-/3IjMdb2L9QbBdWiW5e3P2/npwMBaU9mHCSCUzNln0ZCYbcfTsGbTJrU/kGemdH2IWmB2ioZ+zkxtmq6g09fGQ==}
     engines: {node: '>=0.10.0'}
 
   react@19.0.0:
@@ -9740,9 +9748,9 @@ snapshots:
 
   '@types/prop-types@15.7.15': {}
 
-  '@types/react-dom@18.3.7(@types/react@18.3.28)':
+  '@types/react-dom@18.2.0':
     dependencies:
-      '@types/react': 18.3.28
+      '@types/react': 18.2.0
 
   '@types/react-dom@19.2.3(@types/react@19.2.14)':
     dependencies:
@@ -9782,6 +9790,12 @@ snapshots:
     dependencies:
       '@types/react': 19.2.14
 
+  '@types/react@18.2.0':
+    dependencies:
+      '@types/prop-types': 15.7.15
+      '@types/scheduler': 0.26.0
+      csstype: 3.2.3
+
   '@types/react@18.3.28':
     dependencies:
       '@types/prop-types': 15.7.15
@@ -9794,6 +9808,8 @@ snapshots:
   '@types/resolve@1.17.1':
     dependencies:
       '@types/node': 20.19.37
+
+  '@types/scheduler@0.26.0': {}
 
   '@types/stack-utils@2.0.3': {}
 
@@ -12916,9 +12932,9 @@ snapshots:
 
   lru.min@1.1.4: {}
 
-  lucide-react@0.263.1(react@18.3.1):
+  lucide-react@0.263.1(react@18.2.0):
     dependencies:
-      react: 18.3.1
+      react: 18.2.0
 
   lucide-react@0.576.0(react@19.0.0):
     dependencies:
@@ -13404,7 +13420,7 @@ snapshots:
       - uglify-js
       - webpack
 
-  next@14.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+  next@14.1.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0):
     dependencies:
       '@next/env': 14.1.0
       '@swc/helpers': 0.5.2
@@ -13412,9 +13428,9 @@ snapshots:
       caniuse-lite: 1.0.30001777
       graceful-fs: 4.2.11
       postcss: 8.4.31
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-      styled-jsx: 5.1.1(react@18.3.1)
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
+      styled-jsx: 5.1.1(react@18.2.0)
     optionalDependencies:
       '@next/swc-darwin-arm64': 14.1.0
       '@next/swc-darwin-x64': 14.1.0
@@ -13820,10 +13836,10 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  react-dom@18.3.1(react@18.3.1):
+  react-dom@18.2.0(react@18.2.0):
     dependencies:
       loose-envify: 1.4.0
-      react: 18.3.1
+      react: 18.2.0
       scheduler: 0.23.2
 
   react-dom@19.0.0(react@19.0.0):
@@ -14119,7 +14135,7 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.14
 
-  react@18.3.1:
+  react@18.2.0:
     dependencies:
       loose-envify: 1.4.0
 
@@ -14632,10 +14648,10 @@ snapshots:
 
   structured-headers@0.4.1: {}
 
-  styled-jsx@5.1.1(react@18.3.1):
+  styled-jsx@5.1.1(react@18.2.0):
     dependencies:
       client-only: 0.0.1
-      react: 18.3.1
+      react: 18.2.0
 
   styled-jsx@5.1.6(@babel/core@7.29.0)(react@19.0.0):
     dependencies:
