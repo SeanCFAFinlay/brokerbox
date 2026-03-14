@@ -1,3 +1,5 @@
+'use client';
+
 import Sidebar from '@/components/Sidebar';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import { useSidebar } from '@/components/SidebarContext';
@@ -24,3 +26,4 @@ export default function MainLayout({ children, userId = "demo" }: { children: Re
         </div>
     );
 }
+
