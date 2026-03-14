@@ -120,3 +120,13 @@ git push origin main --force-with-lease
 7. **Build fails after "Packages in scope"**
    - The build command disables Turbo telemetry (`TURBO_TELEMETRY_DISABLED=1`). Ensure **Node.js Version** is **20** in Project Settings.
    - If it still fails, copy the **full error** from the Vercel build log (the red lines after the Turbo step) to debug Prisma, Next.js, or memory issues.
+
+---
+
+## G. CI efficiency: Turbo remote cache & Git hooks
+
+**Turbo remote cache (CI)**  
+- In **GitHub** → repo **Settings** → **Secrets and variables** → **Actions**: add **TURBO_TOKEN** (from [Vercel](https://vercel.com/account/tokens)) and **TURBO_TEAM** (variable: your Vercel team slug, e.g. `stm-tech`). CI will use Turbo remote cache when these are set, speeding up builds.
+
+**Pre-push hook (local)**  
+- **Husky** runs before every push: `pnpm run typecheck` and `pnpm run lint`. Fix type/lint errors locally to avoid failing CI. To skip (not recommended): `git push --no-verify`.
