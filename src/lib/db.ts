@@ -3,9 +3,9 @@ import { PrismaClient } from '@prisma/client';
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 
 export const prisma =
-  globalForPrisma.prisma ||
+  globalForPrisma.prisma ??
   new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query'] : ['error'],
+    log: process.env.NODE_ENV === 'development' ? ['query'] : [],
   });
 
 // Always cache the client in the global scope to prevent
