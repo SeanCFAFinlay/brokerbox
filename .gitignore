@@ -55,3 +55,10 @@ packages/database/src/generated/
 apps/web/.next/
 apps/web/public/sw.js
 apps/web/public/fallback-*.js
+
+# build/debug log files left in repo root
+build_error.txt
+full_build_error.txt
+db_build_error*.txt
+pnpm_error.txt
+types_build_error_v2.txt
