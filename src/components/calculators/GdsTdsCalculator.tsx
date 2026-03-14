@@ -12,10 +12,17 @@ export function GdsTdsCalculator() {
   const [condoFees, setCondoFees] = useState(0);
   const [otherDebts, setOtherDebts] = useState(600);
 
-  const monthlyIncome = grossIncome / 12;
-
-  const gds = calculateGDS(mortgagePayment, propertyTaxes, heating, condoFees, monthlyIncome);
-  const tds = calculateTDS(mortgagePayment + propertyTaxes + heating + (condoFees * 0.5), otherDebts, monthlyIncome);
+  const gdsTdsInput = {
+    principal: mortgagePayment,
+    interest: 0,
+    taxes: propertyTaxes,
+    heat: heating,
+    condoFees,
+    otherDebt: otherDebts,
+    grossIncome,
+  };
+  const gds = calculateGDS(gdsTdsInput);
+  const tds = calculateTDS(gdsTdsInput);
 
   return (
     <div className={s.grid2}>

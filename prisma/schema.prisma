@@ -167,6 +167,8 @@ model Deal {
   propertyAddress String?
   propertyType    String   @default("residential")
   properties      Property[]
+  propertyAddress String? // Convenience field: primary property address
+  propertyType    String? // Convenience field: primary property type
   propertyValue   Float   @default(0) // Total value
   propertyAddress String?
   propertyType    String  @default("residential")

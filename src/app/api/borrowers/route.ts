@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
         const raw = await req.json();
         const parsed = parseBody(createBorrowerSchema, raw);
         if (parsed.success === false) return parsed.response;
-        const borrower = await prisma.borrower.create({ data: parsed.data });
+        const borrower = await prisma.borrower.create({ data: parsed.data as any });
         await logAudit('Borrower', borrower.id, 'CREATE');
         return NextResponse.json(borrower, { status: 201 });
     } catch (err) {

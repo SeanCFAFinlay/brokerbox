@@ -8,7 +8,9 @@ export const prisma =
     log: process.env.NODE_ENV === 'development' ? ['query'] : [],
   });
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+// Always cache the client in the global scope to prevent
+// exhausting the database connection pool in serverless environments.
+globalForPrisma.prisma = prisma;
 
 export const db = prisma;
 export default prisma;
