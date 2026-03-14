@@ -1,9 +1,8 @@
-'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useTheme } from './ThemeProvider';
-import { useSidebar } from './SidebarContext';
-import styles from './Sidebar.module.css';
+import { useTheme } from '@/components/ThemeProvider';
+import { useSidebar } from '@/components/SidebarContext';
+import styles from '@/styles/Sidebar.module.css';
 
 const NAV = [
     { label: 'Dashboard', href: '/', icon: '📊' },

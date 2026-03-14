@@ -1,7 +1,7 @@
-'use client';
-import Sidebar from './Sidebar';
-import NotificationBell from './notifications/NotificationBell';
-import { useSidebar } from './SidebarContext';
+import Sidebar from '@/components/Sidebar';
+import NotificationBell from '@/components/notifications/NotificationBell';
+import { useSidebar } from '@/components/SidebarContext';
+import s from '@/styles/MainLayout.module.css';
 
 export default function MainLayout({ children, userId = "demo" }: { children: React.ReactNode, userId?: string }) {
     const { toggle } = useSidebar();

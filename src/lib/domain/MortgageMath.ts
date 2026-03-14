@@ -1,102 +1,66 @@
-// MortgageMath.ts
-// Core financial engine utilities for BrokerBox
-
-export function calculateGDS(
-  principalAndInterest: number,
-  propertyTaxes: number,
-  heatingCosts: number,
-  condoFees: number,
-  grossIncome: number
-): number {
-  if (grossIncome <= 0) return 0;
-  return ((principalAndInterest + propertyTaxes + heatingCosts + (condoFees * 0.5)) / grossIncome) * 100;
-}
-
-export function calculateTDS(
-  gdsComponentsTotal: number,
-  otherDebts: number,
-  grossIncome: number
-): number {
-  if (grossIncome <= 0) return 0;
-  return ((gdsComponentsTotal + otherDebts) / grossIncome) * 100;
-}
-
 /**
- * Calculate private commission.
- * @param loanAmount Total loan amount
- * @param bps Basis points (e.g., 100 bps = 1%)
- * @param splitPercentage The split going back to the house/brokerage (e.g., 20 for 20%)
- * @param flatFees Any flat fees deducted
+ * MortgageMath.ts
+ * Core financial engine for BrokerBox CRM.
  */
-export function calculatePrivateCommission(
-  loanAmount: number,
-  bps: number,
-  splitPercentage: number,
-  flatFees: number
-): number {
-  const grossCommission = loanAmount * (bps / 10000);
-  const splitAmount = grossCommission * (splitPercentage / 100);
-  return grossCommission - splitAmount - flatFees;
+
+export interface GdsTdsInput {
+    principal: number;
+    interest: number;
+    taxes: number;
+    heat: number;
+    condoFees?: number;
+    otherDebt?: number;
+    grossIncome: number;
 }
 
-export interface AmortizationPeriod {
-  month: number;
-  principalPayment: number;
-  interestPayment: number;
-  balance: number;
-  totalPayment: number;
+export function calculateGDS(input: GdsTdsInput): number {
+    const housingCosts = input.principal + input.interest + input.taxes + input.heat + (input.condoFees || 0) * 0.5;
+    return (housingCosts / (input.grossIncome / 12)) * 100;
 }
 
-export function calculateAmortization(
-  principal: number,
-  annualInterestRate: number,
-  amortizationMonths: number,
-  isInterestOnly: boolean = false
-): AmortizationPeriod[] {
-  const schedule: AmortizationPeriod[] = [];
-  let balance = principal;
-  
-  // Standard monthly compounding
-  const monthlyInterestRate = annualInterestRate / 100 / 12;
+export function calculateTDS(input: GdsTdsInput): number {
+    const totalDebt = input.principal + input.interest + input.taxes + input.heat + (input.condoFees || 0) * 0.5 + (input.otherDebt || 0);
+    return (totalDebt / (input.grossIncome / 12)) * 100;
+}
 
-  if (isInterestOnly) {
-    const interestPayment = balance * monthlyInterestRate;
-    for (let month = 1; month <= amortizationMonths; month++) {
-      schedule.push({
-        month,
-        principalPayment: 0,
-        interestPayment,
-        balance,
-        totalPayment: interestPayment,
-      });
-    }
-  } else {
-    // Principal and Interest standard amortization
-    // Formula: M = P [ i(1 + i)^n ] / [ (1 + i)^n - 1]
-    const monthlyPayment =
-      (principal * monthlyInterestRate) /
-      (1 - Math.pow(1 + monthlyInterestRate, -amortizationMonths));
+export interface CommissionSplit {
+    loanAmount: number;
+    lenderBps: number;
+    brokerBps: number;
+    flatFees: number;
+    splitPercentage: number;
+}
 
-    for (let month = 1; month <= amortizationMonths; month++) {
-      const interestPayment = balance * monthlyInterestRate;
-      let principalPayment = monthlyPayment - interestPayment;
-      
-      // Handle rounding issues on the final payment
-      if (balance - principalPayment < 0.01 || month === amortizationMonths) {
-        principalPayment = balance;
-      }
-      
-      balance = Math.max(0, balance - principalPayment);
-      
-      schedule.push({
-        month,
-        principalPayment,
-        interestPayment,
-        balance,
-        totalPayment: principalPayment + interestPayment,
-      });
-    }
-  }
-  
-  return schedule;
+export function calculateCommission(input: CommissionSplit) {
+    const lenderFee = (input.loanAmount * input.lenderBps) / 10000;
+    const brokerFee = (input.loanAmount * input.brokerBps) / 10000;
+    const totalGross = lenderFee + brokerFee + input.flatFees;
+    const houseSplit = totalGross * (input.splitPercentage / 100);
+    const agentSplit = totalGross - houseSplit;
+
+    return { totalGross, houseSplit, agentSplit };
+}
+
+export function calculateLTV(loanAmount: number, propertyValue: number): number {
+    if (propertyValue === 0) return 0;
+    return (loanAmount / propertyValue) * 100;
+}
+
+export function calculateLenderROI(input: {
+    loanAmount: number,
+    interestRate: number,
+    lenderFee: number,
+    termMonths: number,
+    servicingFee: number
+}) {
+    const termInterest = (input.loanAmount * (input.interestRate / 100)) * (input.termMonths / 12);
+    const lenderFeeAmount = (input.loanAmount * (input.lenderFee / 100));
+    const totalIncome = termInterest + lenderFeeAmount - (input.loanAmount * (input.servicingFee / 100) * (input.termMonths / 12));
+    const roi = (totalIncome / input.loanAmount) * (12 / input.termMonths) * 100;
+    
+    return { roi, totalIncome, termInterest, lenderFeeAmount };
+}
+
+export function calculateInterestHoldback(loanAmount: number, interestRate: number, months: number): number {
+    return (loanAmount * (interestRate / 100)) * (months / 12);
 }

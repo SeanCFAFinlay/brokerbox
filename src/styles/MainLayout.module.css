@@ -1,0 +1,19 @@
+.mainContent {
+  margin-left: 260px;
+  flex: 1;
+  min-height: 100vh;
+  background: var(--bb-bg-primary);
+}
+
+.header {
+  height: 64px;
+  background: var(--bb-bg-secondary);
+  border-bottom: 1px solid var(--bb-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}

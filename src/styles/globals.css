@@ -1,104 +1,20 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-@import "./theme.css";
-
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+:root {
+  --bb-primary: #3b82f6;
+  --bb-primary-faint: rgba(59, 130, 246, 0.1);
+  --bb-bg-primary: #0f172a;
+  --bb-bg-secondary: #1e293b;
+  --bb-bg-hover: #334155;
+  --bb-border: #334155;
+  --bb-text-primary: #f8fafc;
+  --bb-text-secondary: #94a3b8;
+  --bb-success: #22c55e;
+  --bb-error: #ef4444;
+  --bb-warning: #eab308;
 }
 
-html,
 body {
-    height: 100%;
-    font-family: 'Inter', system-ui, sans-serif;
-    background: var(--bb-bg);
-    color: var(--bb-text);
-    -webkit-font-smoothing: antialiased;
-    transition: background 0.2s, color 0.2s;
-}
-
-a {
-    color: inherit;
-    text-decoration: none;
-}
-
-/* Scrollbar */
-::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
-
-::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-    background: var(--bb-muted);
-    border-radius: 3px;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-.loading-spinner { animation: spin 0.8s linear infinite; }
-
-/* Utility */
-.visually-hidden {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-}
-
-.main-content {
-    flex: 1;
-    margin-left: 260px;
-    background: var(--bb-bg);
-    min-height: 100vh;
-    transition: margin-left 0.3s ease;
-}
-
-@media (max-width: 768px) {
-    .main-content {
-        margin-left: 0;
-    }
-}
-
-.main-header {
-    height: 64px;
-    border-bottom: 1px solid var(--bb-border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 32px;
-    position: sticky;
-    top: 0;
-    background: var(--bb-bg);
-    z-index: 900;
-}
-
-@media (max-width: 768px) {
-    .main-header {
-        padding: 0 16px;
-    }
-}
-
-.hamburger {
-    display: none;
-    background: none;
-    border: none;
-    color: var(--bb-text);
-    font-size: 24px;
-    cursor: pointer;
-    padding: 8px;
-    margin-left: -8px;
-}
-
-@media (max-width: 768px) {
-    .hamburger {
-        display: block;
-    }
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background: var(--bb-bg-primary);
+  color: var(--bb-text-primary);
 }
