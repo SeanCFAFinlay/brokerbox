@@ -1,0 +1,14 @@
+
+> brokerbox@1.0.0 build C:\Users\sean\BBBUILDOUT\brokerbox
+> next build
+
+
+> Build error occurred
+Error: Configuring Next.js via 'next.config.ts' is not supported. Please replace the file with 'next.config.js' or 'next.config.mjs'.
+    at loadConfig (C:\Users\sean\BBBUILDOUT\brokerbox\node_modules\.pnpm\next@14.1.0_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\server\config.js:786:19)
+    at async Span.traceAsyncFn (C:\Users\sean\BBBUILDOUT\brokerbox\node_modules\.pnpm\next@14.1.0_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\trace\trace.js:151:20)
+    at async C:\Users\sean\BBBUILDOUT\brokerbox\node_modules\.pnpm\next@14.1.0_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\index.js:379:28
+    at async Span.traceAsyncFn (C:\Users\sean\BBBUILDOUT\brokerbox\node_modules\.pnpm\next@14.1.0_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\trace\trace.js:151:20)
+    at async build (C:\Users\sean\BBBUILDOUT\brokerbox\node_modules\.pnpm\next@14.1.0_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\index.js:374:9)
+    at async main (C:\Users\sean\BBBUILDOUT\brokerbox\node_modules\.pnpm\next@14.1.0_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\bin\next:155:5)
+ΓÇëELIFECYCLEΓÇë Command failed with exit code 1.

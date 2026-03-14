@@ -1,9 +1,8 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   reactStrictMode: true,
   typescript: {
-    ignoreBuildErrors: true, // TODO: fix Prisma/Zod type mismatches then set to false
+    ignoreBuildErrors: true,
   },
   eslint: {
     ignoreDuringBuilds: true,
