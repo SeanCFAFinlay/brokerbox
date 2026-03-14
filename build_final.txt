@@ -1,0 +1,26 @@
+
+> brokerbox@ build C:\Users\sean\BBBUILDOUT\brokerbox
+> next build
+
+   Γû▓ Next.js 15.1.11
+   - Environments: .env.local, .env
+
+   Creating an optimized production build ...
+ Γ£ô Compiled successfully
+   Skipping linting
+   Checking validity of types ...
+Failed to compile.
+
+./src/app/api/deals/[id]/loan/route.ts:34:21
+Type error: Type 'number | null' is not assignable to type 'number'.
+  Type 'null' is not assignable to type 'number'.
+
+  32 |                     maturityDate: new Date(body.maturityDate),
+  33 |                     principalBalance: principal,
+> 34 |                     interestRate: Number(body.interestRate) || deal.interestRate,
+     |                     ^
+  35 |                     interestType: body.interestType || 'fixed'
+  36 |                 }
+  37 |             });
+Next.js build worker exited with code: 1 and signal: null
+ΓÇëELIFECYCLEΓÇë Command failed with exit code 1.

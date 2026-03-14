@@ -1,0 +1,11 @@
+
+> brokerbox@ build C:\Users\sean\BBBUILDOUT\brokerbox
+> next build
+
+   Γû▓ Next.js 15.1.11
+   - Environments: .env.local, .env
+
+   Creating an optimized production build ...
+ Γ¿» page.tsx doesn't have a root layout. To fix this error, make sure every page has a root layout.
+Next.js build worker exited with code: 1 and signal: null
+ΓÇëELIFECYCLEΓÇë Command failed with exit code 1.

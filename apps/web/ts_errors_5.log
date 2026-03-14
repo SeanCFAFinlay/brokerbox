@@ -1,5 +1,0 @@
-src/app/api/deals/[id]/loan/route.ts(36,49): error TS2739: Type 'undefined[]' is missing the following properties from type '{ old: unknown; new: unknown; }': old, new
-src/app/api/deals/[id]/loan/route.ts(37,44): error TS2739: Type '{ key: string; old: string; new: string; }[]' is missing the following properties from type '{ old: unknown; new: unknown; }': old, new
-src/app/deals/[id]/page.tsx(43,11): error TS2451: Cannot redeclare block-scoped variable 'lenders'.
-src/app/deals/[id]/page.tsx(62,11): error TS2451: Cannot redeclare block-scoped variable 'lenders'.
-src/app/deals/[id]/page.tsx(62,21): error TS2552: Cannot find name 'rawLenders'. Did you mean 'lenders'?

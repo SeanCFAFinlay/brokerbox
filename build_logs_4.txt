@@ -1,0 +1,30 @@
+
+> brokerbox@ build C:\Users\sean\BBBUILDOUT\brokerbox
+> next build
+
+   Γû▓ Next.js 15.1.11
+   - Environments: .env.local, .env
+
+   Creating an optimized production build ...
+ Γ£ô Compiled successfully
+   Linting and checking validity of types ...
+Failed to compile.
+
+./src/components/DataTable.tsx:42:68
+Type error: No overload matches this call.
+  Overload 1 of 2, '(props: TextProps): Text', gave the following error.
+    Type '0 | { width: number; } | undefined' is not assignable to type 'TextStyle | Falsy | RecursiveArray<TextStyle | Falsy> | readonly (TextStyle | Falsy)[]'.
+      Type '0' is not assignable to type 'TextStyle | Falsy | RecursiveArray<TextStyle | Falsy> | readonly (TextStyle | Falsy)[]'.
+  Overload 2 of 2, '(props: TextProps, context: any): Text', gave the following error.
+    Type '0 | { width: number; } | undefined' is not assignable to type 'TextStyle | Falsy | RecursiveArray<TextStyle | Falsy> | readonly (TextStyle | Falsy)[]'.
+      Type '0' is not assignable to type 'TextStyle | Falsy | RecursiveArray<TextStyle | Falsy> | readonly (TextStyle | Falsy)[]'.
+
+  40 |                 <View style={styles.headerRow}>
+  41 |                     {columns.map((col, idx) => (
+> 42 |                         <Text key={idx} style={[styles.headerCell, col.width && { width: col.width }]}>{col.header}</Text>
+     |                                                                    ^
+  43 |                     ))}
+  44 |                 </View>
+  45 |                 {/* Rows */}
+Next.js build worker exited with code: 1 and signal: null
+ΓÇëELIFECYCLEΓÇë Command failed with exit code 1.

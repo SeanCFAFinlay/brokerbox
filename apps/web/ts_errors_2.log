@@ -1,1 +1,0 @@
-src/app/api/settings/route.ts(20,5): error TS2578: Unused '@ts-expect-error' directive.

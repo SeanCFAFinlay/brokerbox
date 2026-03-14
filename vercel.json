@@ -1,6 +1,1 @@
-{
-  "framework": "nextjs",
-  "installCommand": "pnpm install --no-frozen-lockfile",
-  "buildCommand": "pnpm run build --filter=@brokerbox/web",
-  "outputDirectory": "apps/web/.next"
-}
+{"rewrites": [{ "source": "/(.*)", "destination": "/" }]}

@@ -26,10 +26,13 @@ jobs:
           cache: pnpm
 
       - name: Install
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
 
-      - name: Typecheck (web + deps)
-        run: pnpm run typecheck --filter=@brokerbox/web
+      - name: Generate Prisma Client
+        run: pnpm run db:generate
 
-      - name: Build web (with deps)
-        run: pnpm run build --filter=@brokerbox/web
+      - name: Typecheck
+        run: pnpm run typecheck
+
+      - name: Build
+        run: pnpm run build

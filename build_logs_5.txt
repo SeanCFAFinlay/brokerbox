@@ -1,0 +1,29 @@
+
+> brokerbox@ build C:\Users\sean\BBBUILDOUT\brokerbox
+> next build
+
+   Γû▓ Next.js 15.1.11
+   - Environments: .env.local, .env
+
+   Creating an optimized production build ...
+ Γ£ô Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/4) ...
+TypeError: Cannot read properties of null (reading 'useContext')
+    at h (C:\Users\sean\BBBUILDOUT\brokerbox\.next\server\pages\_error.js:1:6053)
+Error occurred prerendering page "/404". Read more: https://nextjs.org/docs/messages/prerender-error
+TypeError: Cannot read properties of null (reading 'useContext')
+    at exports.useContext (C:\Users\sean\BBBUILDOUT\brokerbox\node_modules\react\cjs\react.production.js:489:33)
+    at h (C:\Users\sean\BBBUILDOUT\brokerbox\.next\server\pages\_error.js:1:6053)
+    at renderWithHooks (C:\Users\sean\BBBUILDOUT\brokerbox\node_modules\.pnpm\react-dom@19.2.3_react@19.2.3\node_modules\react-dom\cjs\react-dom-server.edge.production.js:4747:18)
+    at renderElement (C:\Users\sean\BBBUILDOUT\brokerbox\node_modules\.pnpm\react-dom@19.2.3_react@19.2.3\node_modules\react-dom\cjs\react-dom-server.edge.production.js:4885:14)
+    at retryNode (C:\Users\sean\BBBUILDOUT\brokerbox\node_modules\.pnpm\react-dom@19.2.3_react@19.2.3\node_modules\react-dom\cjs\react-dom-server.edge.production.js:5603:16)
+    at renderNodeDestructive (C:\Users\sean\BBBUILDOUT\brokerbox\node_modules\.pnpm\react-dom@19.2.3_react@19.2.3\node_modules\react-dom\cjs\react-dom-server.edge.production.js:5397:7)
+    at renderNode (C:\Users\sean\BBBUILDOUT\brokerbox\node_modules\.pnpm\react-dom@19.2.3_react@19.2.3\node_modules\react-dom\cjs\react-dom-server.edge.production.js:5964:14)
+    at renderChildrenArray (C:\Users\sean\BBBUILDOUT\brokerbox\node_modules\.pnpm\react-dom@19.2.3_react@19.2.3\node_modules\react-dom\cjs\react-dom-server.edge.production.js:5746:7)
+    at retryNode (C:\Users\sean\BBBUILDOUT\brokerbox\node_modules\.pnpm\react-dom@19.2.3_react@19.2.3\node_modules\react-dom\cjs\react-dom-server.edge.production.js:5617:9)
+    at renderNodeDestructive (C:\Users\sean\BBBUILDOUT\brokerbox\node_modules\.pnpm\react-dom@19.2.3_react@19.2.3\node_modules\react-dom\cjs\react-dom-server.edge.production.js:5397:7)
+Export encountered an error on /_error: /404, exiting the build.
+ Γ¿» Next.js build worker exited with code: 1 and signal: null
+ΓÇëELIFECYCLEΓÇë Command failed with exit code 1.

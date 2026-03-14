@@ -1,0 +1,4 @@
+
+> @brokerbox/web@0.1.0 typecheck C:\Users\sean\BBBUILDOUT\brokerbox\apps\web
+> tsc --noEmit
+

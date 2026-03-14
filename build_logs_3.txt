@@ -1,0 +1,24 @@
+
+> brokerbox@ build C:\Users\sean\BBBUILDOUT\brokerbox
+> next build
+
+   Γû▓ Next.js 15.1.11
+   - Environments: .env.local, .env
+
+   Creating an optimized production build ...
+ Γ£ô Compiled successfully
+   Linting and checking validity of types ...
+Failed to compile.
+
+./src/app/ThemeProvider.tsx:29:23
+Type error: Cannot find name 'localStorage'.
+
+  27 |     // Load saved theme or system preference on mount
+  28 |     useEffect(() => {
+> 29 |         const saved = localStorage.getItem('brokerbox_theme') as Theme | null;
+     |                       ^
+  30 |         if (saved) {
+  31 |             setTheme(saved);
+  32 |         } else {
+Next.js build worker exited with code: 1 and signal: null
+ΓÇëELIFECYCLEΓÇë Command failed with exit code 1.

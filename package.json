@@ -6,32 +6,36 @@
     "node": ">=20"
   },
   "scripts": {
-    "dev": "turbo run dev",
-    "build": "turbo run build",
-    "vercel-build": "pnpm run build --filter=@brokerbox/web",
-    "lint": "turbo run lint",
-    "typecheck": "turbo run typecheck",
-    "db:generate": "pnpm --dir apps/web exec prisma generate --schema=../../packages/database/prisma/schema.prisma",
-    "db:migrate": "pnpm -C apps/web db:migrate",
-    "db:push": "pnpm --filter @brokerbox/database db:push",
-    "db:seed": "pnpm -C apps/web db:seed",
-    "api:dev": "pnpm -C apps/api dev",
-    "api:build": "pnpm -C apps/api build"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "postinstall": "prisma generate",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:push": "prisma db push",
+    "db:seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@hookform/resolvers": "^3.9.1",
+    "@prisma/client": "^5.22.0",
+    "lucide-react": "^0.576.0",
+    "next": "15.1.11",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-hook-form": "^7.71.2",
+    "recharts": "^3.7.0",
+    "zod": "^3.23.0"
   },
   "devDependencies": {
-    "@expo/cli": "^55.0.14",
-    "@prisma/client": "^5.22.0",
     "@types/node": "^20.11.0",
-    "cross-env": "^7.0.3",
-    "next": "15.1.11",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "prisma": "^5.22.0",
-    "turbo": "^2.1.1",
     "typescript": "^5.3.3"
-  },
-  "pnpm": {
-    "overrides": {
-      "@types/react": "^18.2.0",
-      "@types/react-dom": "^18.2.0"
-    }
   }
 }
