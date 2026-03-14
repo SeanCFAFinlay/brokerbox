@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ─── Auth & User ────────────────────────────────────────────────────────────────
@@ -167,6 +168,8 @@ model Deal {
   propertyType    String   @default("residential")
   properties      Property[]
   propertyValue   Float   @default(0) // Total value
+  propertyAddress String?
+  propertyType    String  @default("residential")
 
   // Loan
   loanAmount    Float   @default(0)
