@@ -62,3 +62,4 @@ full_build_error.txt
 db_build_error*.txt
 pnpm_error.txt
 types_build_error_v2.txt
+prisma-usage-report.txt

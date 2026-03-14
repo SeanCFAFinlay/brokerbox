@@ -1,0 +1,17 @@
+
+> brokerbox@1.0.0 build C:\Users\sean\BBBUILDOUT\brokerbox
+> prisma generate && next build
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+
+Γ£ö Generated Prisma Client (v5.22.0) to .\node_modules\.pnpm\@prisma+client@5.22.0_prisma@5.22.0\node_modules\@prisma\client in 279ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Want real-time updates to your database without manual polling? Discover how with Pulse: https://pris.ly/tip-0-pulse
+
+   Γû▓ Next.js 15.1.6
+   - Environments: .env.local, .env
+
+   Creating an optimized production build ...
