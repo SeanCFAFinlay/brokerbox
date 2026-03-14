@@ -1,4 +1,3 @@
-'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTheme } from '@/components/ThemeProvider';
@@ -14,10 +13,8 @@ const NAV = [
     { label: 'BrokerBox Match', href: '/match', icon: '🎯' },
     { label: 'Scenario Builder', href: '/scenarios', icon: '🧮' },
     { label: 'Calculators', href: '/calculators', icon: '🔢' },
-    { label: 'Tasks', href: '/tasks', icon: '✅' },
     { label: 'DocVault', href: '/docvault', icon: '📁' },
-    { label: 'FundFlow', href: '/fundflow', icon: '💸' },
-    { label: 'Capital', href: '/capital', icon: '💵' },
+    { label: 'FundFlow', href: '/fundflow', icon: '💰' },
     { label: 'Reports', href: '/reports', icon: '📈' },
     { label: 'Loans', href: '/loans', icon: '💰' },
     { label: 'Settings', href: '/settings', icon: '⚙️' },
@@ -38,6 +35,7 @@ export default function Sidebar() {
                         <span className={styles.logoIcon}>◆</span>
                         <span className={styles.logoText}>BrokerBox</span>
                     </div>
+                    <button className={styles.closeBtn} onClick={close}>✕</button>
                     <button className={styles.closeBtn} onClick={close}>✕</button>
                 </div>
 
