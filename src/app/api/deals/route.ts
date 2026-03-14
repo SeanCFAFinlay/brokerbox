@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
         if (typeof data.propertyValue === 'number' && typeof data.loanAmount === 'number') {
             (data as Record<string, unknown>).ltv = (data.loanAmount / data.propertyValue) * 100;
         }
-        const deal = await prisma.deal.create({ data });
+        const deal = await prisma.deal.create({ data: data as any });
         await logAudit('Deal', deal.id, 'CREATE');
         return NextResponse.json(deal, { status: 201 });
     } catch (err) {
