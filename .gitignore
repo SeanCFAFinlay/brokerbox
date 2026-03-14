@@ -1,5 +1,6 @@
 # Node
 node_modules/
+package-lock.json
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -35,6 +36,9 @@ ts-errors.txt
 build-error.log
 *.bak
 *.bak.*
+
+# Temp files
+tmp/
 
 # local build junk
 .next/

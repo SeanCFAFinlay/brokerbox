@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ─── Auth & User ────────────────────────────────────────────────────────────────
@@ -164,8 +165,13 @@ model Deal {
 
   // Property
   propertyAddress String?
+  propertyType    String   @default("residential")
+  properties      Property[]
+  propertyAddress String? // Convenience field: primary property address
+  propertyType    String? // Convenience field: primary property type
+  propertyValue   Float   @default(0) // Total value
+  propertyAddress String?
   propertyType    String  @default("residential")
-  propertyValue   Float   @default(0)
 
   // Loan
   loanAmount    Float   @default(0)
@@ -176,6 +182,12 @@ model Deal {
   loanPurpose   String  @default("purchase") // purchase | refinance | renewal | equity_takeout | bridge | construction
   occupancyType String  @default("owner_occupied") // owner_occupied | rental | investment | commercial
   exitStrategy  String?
+  
+  // Private Specifics
+  propertyTaxArrears Boolean @default(false)
+  zoning             String  @default("urban") // urban | rural | commercial | industrial
+  hasSeptic          Boolean @default(false)
+  isIslandProperty   Boolean @default(false)
 
   // Ratios
   ltv            Float?
@@ -505,4 +517,24 @@ model BrokerageSettings {
   defaultTermMonths   Int    @default(12)
   defaultAmortMonths  Int    @default(300)
   defaultInterestRate Float  @default(5.5)
+}
+
+model Property {
+  id              String   @id @default(cuid())
+  dealId          String
+  address         String
+  city            String?
+  province        String   @default("ON")
+  postalCode      String?
+  propertyType    String   @default("residential") // residential | land | commercial | industrial | multi-family
+  estimatedValue  Float    @default(0)
+  annualTaxes     Float?
+  isSubject       Boolean  @default(true) // Whether this is the primary security for the loan
+  
+  deal            Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([dealId])
 }

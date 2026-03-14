@@ -1,0 +1,20 @@
+:root {
+  --bb-primary: #3b82f6;
+  --bb-primary-faint: rgba(59, 130, 246, 0.1);
+  --bb-bg-primary: #0f172a;
+  --bb-bg-secondary: #1e293b;
+  --bb-bg-hover: #334155;
+  --bb-border: #334155;
+  --bb-text-primary: #f8fafc;
+  --bb-text-secondary: #94a3b8;
+  --bb-success: #22c55e;
+  --bb-error: #ef4444;
+  --bb-warning: #eab308;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background: var(--bb-bg-primary);
+  color: var(--bb-text-primary);
+}

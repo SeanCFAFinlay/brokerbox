@@ -1,0 +1,35 @@
+
+> brokerbox@1.0.0 build C:\Users\sean\BBBUILDOUT\brokerbox
+> next build
+
+   Γû▓ Next.js 14.1.0
+   - Environments: .env.local, .env
+
+   Creating an optimized production build ...
+ Γ£ô Compiled successfully
+   Skipping validation of types
+   Skipping linting
+   Collecting page data ...
+   Generating static pages (0/4) ...
+
+   Generating static pages (1/4) 
+
+   Generating static pages (2/4) 
+
+   Generating static pages (3/4) 
+
+ Γ£ô Generating static pages (4/4) 
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+Γöî Γùï /                                    142 B          84.3 kB
+Γöö Γùï /_not-found                          883 B            85 kB
++ First Load JS shared by all            84.1 kB
+  Γö£ chunks/1547cac5-2789762354b4c123.js  53.4 kB
+  Γö£ chunks/481-f220aae0f9752dce.js       28.9 kB
+  Γöö other shared chunks (total)          1.84 kB
+
+
+Γùï  (Static)  prerendered as static content
+
