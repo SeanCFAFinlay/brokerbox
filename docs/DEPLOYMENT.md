@@ -117,7 +117,22 @@ git push origin main --force-with-lease
    - In your DNS provider: CNAME **brokerbox.ca** (or **www**) to **cname.vercel-dns.com** (or the value Vercel shows).
    - After DNS propagates, Vercel will serve the app at brokerbox.ca.
 
+
 7. **Build completes in < 1 second with no output ("Detected Turbo. Adjusting default settings")**
    - Vercel detected `turbo.json` and enabled Turbo Remote Cache. When the cache has a hit for the current commit, `turbo run build` replays the cached output without writing files to disk, so `apps/web/.next` is empty and nothing is deployed.
    - **Fix already applied**: `apps/web/vercel.json` now uses explicit per-package `pnpm --filter` commands (not `turbo run build`) so each build step always runs fresh and files are always written locally.
    - If you see this again, ensure no dashboard override is re-introducing a `turbo run build` or root-level `pnpm run build --filter=...` call in place of the explicit per-package `pnpm --filter <pkg> run build` commands.
+
+7. **Build fails after "Packages in scope"**
+   - The build command disables Turbo telemetry (`TURBO_TELEMETRY_DISABLED=1`). Ensure **Node.js Version** is **20** in Project Settings.
+   - If it still fails, copy the **full error** from the Vercel build log (the red lines after the Turbo step) to debug Prisma, Next.js, or memory issues.
+
+---
+
+## G. CI efficiency: Turbo remote cache & Git hooks
+
+**Turbo remote cache (CI)**  
+- In **GitHub** → repo **Settings** → **Secrets and variables** → **Actions**: add **TURBO_TOKEN** (from [Vercel](https://vercel.com/account/tokens)) and **TURBO_TEAM** (variable: your Vercel team slug, e.g. `stm-tech`). CI will use Turbo remote cache when these are set, speeding up builds.
+
+**Pre-push hook (local)**  
+- **Husky** runs before every push: `pnpm run typecheck` and `pnpm run lint`. Fix type/lint errors locally to avoid failing CI. To skip (not recommended): `git push --no-verify`. migration/supabase-native

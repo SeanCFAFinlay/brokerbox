@@ -1,70 +1,79 @@
-import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
-import { logAudit } from '@/lib/audit';
-import { syncToCalendar } from '@/lib/calendar';
-import { parseBody, handlePrismaError } from '@/lib/api';
-import { createTaskSchema } from '@/lib/schemas';
+import { NextRequest, NextResponse } from 'next/server'
+import { logAudit } from '@/lib/audit'
+import { syncToCalendar } from '@/lib/calendar'
+import { parseBody } from '@/lib/api'
+import { createTaskSchema } from '@/lib/schemas'
+import { createTask, listTasks } from '@/lib/supabase/queries/tasks'
+
+function handleSupabaseError(error: unknown) {
+  console.error(error)
+  return NextResponse.json(
+    { error: 'Supabase request failed' },
+    { status: 500 }
+  )
+}
 
 export async function GET(req: NextRequest) {
-    try {
-        const { searchParams } = new URL(req.url);
-        const entityType = searchParams.get('entityType');
-        const entityId = searchParams.get('entityId');
-        const assignedToId = searchParams.get('assignedToId');
-        const status = searchParams.get('status');
+  try {
+    const { searchParams } = new URL(req.url)
+    const entityType = searchParams.get('entityType')
+    const entityId = searchParams.get('entityId')
+    const assignedToId = searchParams.get('assignedToId')
+    const status = searchParams.get('status')
 
-        const where: Record<string, string> = {};
-        if (entityType && entityId) {
-            where.entityType = entityType;
-            where.entityId = entityId;
-        }
-        if (assignedToId) where.assignedToId = assignedToId;
-        if (status) where.status = status;
+    const { data, error } = await listTasks({
+      entityType,
+      entityId,
+      assignedToId,
+      status,
+    })
 
-        const tasks = await prisma.task.findMany({
-            where,
-            orderBy: [{ dueDate: 'asc' }, { createdAt: 'desc' }]
-        });
-        return NextResponse.json(tasks);
-    } catch (err) {
-        return handlePrismaError(err);
-    }
+    if (error) return handleSupabaseError(error)
+
+    return NextResponse.json(data ?? [])
+  } catch (err) {
+    return handleSupabaseError(err)
+  }
 }
 
 export async function POST(req: NextRequest) {
-    try {
-        const raw = await req.json();
-        const parsed = parseBody(createTaskSchema, raw);
-        if (parsed.success === false) return parsed.response;
-        const d = parsed.data;
-        const dueDate = d.dueDate != null ? new Date(d.dueDate as string | Date) : null;
-        const task = await prisma.task.create({
-            data: {
-                title: d.title,
-                description: d.description ?? undefined,
-                dueDate,
-                status: (d.status as 'pending' | 'completed') ?? 'pending',
-                assignedToId: d.assignedToId ?? undefined,
-                entityType: d.entityType ?? undefined,
-                entityId: d.entityId ?? undefined,
-                dealId: d.dealId ?? undefined,
-            }
-        });
+  try {
+    const raw = await req.json()
+    const parsed = parseBody(createTaskSchema, raw)
+    if (parsed.success === false) return parsed.response
 
-        if (task.dueDate) {
-            await syncToCalendar({
-                title: `Task: ${task.title}`,
-                description: task.description || '',
-                startTime: task.dueDate,
-                eventType: 'task',
-                sourceId: task.id,
-                sourceType: 'Task'
-            });
-        }
+    const d = parsed.data
 
-        await logAudit('Task', task.id, 'CREATE');
-        return NextResponse.json(task, { status: 201 });
-    } catch (err) {
-        return handlePrismaError(err);
+    const { data: task, error } = await createTask({
+      title: d.title,
+      description: d.description ?? null,
+      dueDate: d.dueDate ?? null,
+      status: (d.status as 'pending' | 'completed') ?? 'pending',
+      assignedToId: d.assignedToId ?? null,
+      entityType: d.entityType ?? null,
+      entityId: d.entityId ?? null,
+      dealId: d.dealId ?? null,
+    })
+
+    if (error) return handleSupabaseError(error)
+    if (!task) {
+      return NextResponse.json({ error: 'Task was not created' }, { status: 500 })
     }
+
+    if (task.dueDate) {
+      await syncToCalendar({
+        title: `Task: ${task.title}`,
+        description: task.description || '',
+        startTime: new Date(task.dueDate),
+        eventType: 'task',
+        sourceId: task.id,
+        sourceType: 'Task',
+      })
+    }
+
+    await logAudit('Task', task.id, 'CREATE')
+    return NextResponse.json(task, { status: 201 })
+  } catch (err) {
+    return handleSupabaseError(err)
+  }
 }

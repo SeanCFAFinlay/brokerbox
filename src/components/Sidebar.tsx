@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTheme } from '@/components/ThemeProvider';
@@ -68,3 +70,4 @@ export default function Sidebar() {
         </>
     );
 }
+
