@@ -164,6 +164,8 @@ model Deal {
   priority   String  @default("normal") // low | normal | high | urgent
 
   // Property
+  propertyAddress String?
+  propertyType    String   @default("residential")
   properties      Property[]
   propertyValue   Float   @default(0) // Total value
   propertyAddress String?
