@@ -1,5 +1,5 @@
 /**
- * Input shapes for revenue/pipeline metrics. Callers pass deal arrays from Prisma.
+ * Input shapes for revenue/pipeline metrics. Callers pass deal arrays from Supabase.
  */
 
 export interface DealForRevenue {

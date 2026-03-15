@@ -44,5 +44,4 @@ export function handleDatabaseError(err: unknown): NextResponse {
   return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
 }
 
-// Keep handlePrismaError as alias for backward compatibility during migration if necessary
-export const handlePrismaError = handleDatabaseError;
+

@@ -11,6 +11,8 @@ import FundDealAction from './FundDealAction';
 import ApplyMatchButton from './ApplyMatchButton';
 import AuditTimeline from '@/components/AuditTimeline';
 import CalendarHighlights from '@/components/CalendarHighlights';
+import { LtvGauge } from '@/components/dashboard/LtvGauge';
+import { interestHoldback } from '@/lib/mortgageMath';
 
 export const dynamic = 'force-dynamic';
 
@@ -136,11 +138,37 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
             <div className={s.kpiRow} style={{ marginBottom: 24 }}>
                 <div className={s.kpiCard}><div className={s.kpiLabel}>Loan Amount</div><div className={s.kpiValue}>${deal.loanAmount?.toLocaleString()}</div></div>
                 <div className={s.kpiCard}><div className={s.kpiLabel}>Property Value</div><div className={s.kpiValue}>${deal.propertyValue?.toLocaleString()}</div></div>
-                <div className={s.kpiCard}><div className={s.kpiLabel}>LTV</div><div className={s.kpiValue}>{deal.ltv ? `${deal.ltv.toFixed(1)}% ` : '—'}</div></div>
+                <div className={s.kpiCard} style={{ minWidth: 200 }}>
+                    <LtvGauge loanAmount={deal.loanAmount || 0} propertyValue={deal.propertyValue || 0} />
+                </div>
                 <div className={s.kpiCard}><div className={s.kpiLabel}>Position</div><div className={s.kpiValue}>{deal.position}</div></div>
                 <div className={s.kpiCard}><div className={s.kpiLabel}>Lender</div><div className={s.kpiValue} style={{ fontSize: 18 }}>{deal.lender?.name || 'Unassigned'}</div></div>
                 <div className={s.kpiCard}><div className={s.kpiLabel}>Docs</div><div className={s.kpiValue} title={`${docStats.verified}/${docStats.requested} verified`}>{docStats.requested ? `${docStats.pctComplete}%` : '—'}</div></div>
             </div>
+
+            {/* ── Net to Client (Interest Holdback) ── */}
+            {deal.interestRate && deal.loanAmount && (
+                <div className={s.card} style={{ marginBottom: 24 }}>
+                    <div className={s.cardTitle}>Private Lending: Net to Client</div>
+                    <div className={s.kpiRow}>
+                        {[6, 12].map(m => {
+                            const hb = interestHoldback(deal.loanAmount, deal.interestRate, m);
+                            return (
+                                <div key={m} className={s.kpiCard}>
+                                    <div className={s.kpiLabel}>{m}-Month Reserve</div>
+                                    <div className={s.kpiValue} style={{ fontSize: 18, color: 'var(--bb-danger)' }}>-${hb.reserve.toLocaleString()}</div>
+                                    <div className={s.kpiSub}>Net Advance: <strong style={{ color: 'var(--bb-success)' }}>${hb.netAdvance.toLocaleString()}</strong></div>
+                                </div>
+                            );
+                        })}
+                        <div className={s.kpiCard}>
+                            <div className={s.kpiLabel}>Monthly Interest</div>
+                            <div className={s.kpiValue} style={{ fontSize: 18 }}>${interestHoldback(deal.loanAmount, deal.interestRate, 1).monthlyInterest.toLocaleString()}</div>
+                            <div className={s.kpiSub}>at {deal.interestRate}%</div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className={s.grid2}>
                 {/* Deal Edit Form */}
@@ -227,13 +255,13 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
                     <div className={s.cardTitle} style={{ marginBottom: 0 }}>Saved Scenarios</div>
                     <Link href="/scenarios" className={`${s.btn} ${s.btnSecondary} ${s.btnSmall} `}>+ Scenario Builder</Link>
                 </div>
-                {deal.scenarios.length === 0 ? (
+                {scenarios.length === 0 ? (
                     <div className={s.emptyState}>No scenarios linked to this deal.</div>
                 ) : (
                     <table className={s.table}>
                         <thead><tr><th>Lender</th><th>Rate</th><th>Term</th><th>Monthly Payment</th><th>Rec</th></tr></thead>
                         <tbody>
-                            {deal.scenarios.map((sc: any) => {
+                            {scenarios.map((sc: any) => {
                                 const r = sc.results as Record<string, number>;
                                 const i = sc.inputs as Record<string, any>;
                                 return (
@@ -260,7 +288,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
                     <div style={{ marginTop: 24 }}>
                         <div style={{ fontSize: 13, textTransform: 'uppercase', fontWeight: 600, color: 'var(--bb-muted)', marginBottom: 12 }}>Stage Transitions</div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            {deal.stageHistory.map((h: any) => (
+                            {stageHistory.map((h: any) => (
                                 <div key={h.id} style={{ display: 'flex', gap: 12, alignItems: 'center', fontSize: 13, color: 'var(--bb-text-secondary)' }}>
                                     <span className={`${s.pill} ${stageColor(h.fromStage)}`} style={{ fontSize: 11 }}>{h.fromStage?.replace('_', ' ')}</span>
                                     <span>→</span>
@@ -314,13 +342,13 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
                     <div className={s.cardTitle} style={{ marginBottom: 0 }}>Deal Documents</div>
                     <Link href="/docvault" className={`${s.btn} ${s.btnSecondary} ${s.btnSmall} `}>Go to DocVault</Link>
                 </div>
-                {deal.docRequests.length === 0 ? (
+                {docRequests.length === 0 ? (
                     <div className={s.emptyState}>No documents requested for this deal.</div>
                 ) : (
                     <table className={s.table}>
                         <thead><tr><th>Document</th><th>Status</th><th>Files</th><th>Notes</th></tr></thead>
                         <tbody>
-                            {deal.docRequests.map((dr: any) => (
+                            {docRequests.map((dr: any) => (
                                 <tr key={dr.id}>
                                     <td>
                                         <div style={{ fontWeight: 600 }}>{dr.docType}</div>

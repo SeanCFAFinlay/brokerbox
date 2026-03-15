@@ -11,7 +11,7 @@ export default async function BorrowersPage() {
         .select('*, deals:Deal(count)')
         .order('updatedAt', { ascending: false });
 
-    // Map counts to mimic Prisma _count structure if needed, or just pass as is
+    // Map counts to a consistent structure for the table component
     const formattedBorrowers = (Array.isArray(borrowers) ? borrowers : []).map(b => ({
         ...b,
         _count: { deals: (b.deals as any || [])[0]?.count || 0 }

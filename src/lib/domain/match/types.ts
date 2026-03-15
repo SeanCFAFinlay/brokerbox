@@ -1,5 +1,5 @@
 /**
- * Domain types for lender matching. No dependency on Prisma or database.
+ * Domain types for lender matching. No dependency on database internals.
  */
 
 export interface BorrowerData {

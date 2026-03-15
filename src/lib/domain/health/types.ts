@@ -1,5 +1,5 @@
 /**
- * Input shapes for health/engagement scoring. Callers pass data from Prisma or API.
+ * Input shapes for health/engagement scoring. Callers pass data from Supabase or API.
  */
 
 export interface BorrowerSnapshot {
