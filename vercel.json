@@ -1,12 +1,6 @@
 {
   "installCommand": "pnpm install",
-  "buildCommand": "pnpm run vercel-build",
-  "framework": "nextjs",
-  "regions": ["lhr1"],
-  "crons": [
-    {
-      "path": "/api/cron/sync-calendars",
-      "schedule": "0 * * * *"
-    }
-  ]
+  "version": 2,
+  "buildCommand": "next build",
+  "framework": "nextjs"
 }
