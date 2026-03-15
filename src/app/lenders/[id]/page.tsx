@@ -17,11 +17,12 @@ export default async function LenderDetailPage({ params }: { params: Promise<{ i
 
     if (error || !lender) return notFound();
 
-    // Manual sort
-    if (lender.deals) lender.deals.sort((a: any, b: any) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    // Manual sort and Filter Fix guards
+    const deals = Array.isArray(lender.deals) ? lender.deals : [];
+    deals.sort((a: any, b: any) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 
-    const activeDeals = (lender.deals || []).filter((d: any) => d.stage !== 'declined' && d.stage !== 'archived' && d.stage !== 'funded');
-    const fundedDeals = (lender.deals || []).filter((d: any) => d.stage === 'funded');
+    const activeDeals = deals.filter((d: any) => d.stage !== 'declined' && d.stage !== 'archived' && d.stage !== 'funded');
+    const fundedDeals = deals.filter((d: any) => d.stage === 'funded');
     const totalFunded = fundedDeals.reduce((sum: number, d: any) => sum + (d.loanAmount || 0), 0);
     const activePipeline = activeDeals.reduce((sum: number, d: any) => sum + (d.loanAmount || 0), 0);
 

@@ -14,9 +14,9 @@ export default async function LenderDealsPage() {
 
     if (error || !lender) return <div>No Lender Found</div>;
 
-    const deals = lender.deals as any[] || [];
-    // Manual sort
-    deals.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    const deals = Array.isArray(lender.deals) ? lender.deals : [];
+    // Manual sort and Filter Fix guards
+    deals.sort((a: any, b: any) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 
     const stageColor = (st: string) => st === 'funded' ? s.pillGreen : st === 'committed' ? s.pillBlue : st === 'declined' ? s.pillRed : s.pillYellow;
 

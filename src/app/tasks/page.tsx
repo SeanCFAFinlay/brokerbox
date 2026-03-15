@@ -10,10 +10,10 @@ export default async function TasksPage() {
         .select('*, Deal(*, borrower:Borrower(*))')
         .order('dueDate', { ascending: true });
 
-    const tasks = tasksData || [];
+    const tasks = Array.isArray(tasksData) ? tasksData : [];
 
-    const pending = tasks.filter((t: any) => t.status === 'pending');
-    const completed = tasks.filter((t: any) => t.status === 'completed');
+    const pending = (tasks as any[]).filter((t: any) => t.status === 'pending');
+    const completed = (tasks as any[]).filter((t: any) => t.status === 'completed');
     const overdue = pending.filter((t: any) => t.dueDate && new Date(t.dueDate) < new Date());
     const dueSoon = pending.filter((t: any) => t.dueDate && new Date(t.dueDate) >= new Date());
 

@@ -65,11 +65,17 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
     }));
     const matchResults = runMatch(borrowerData, dealData, lenders as any).slice(0, 3);
 
-    // Manual sort for nested results
-    if (deal.docRequests) deal.docRequests.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    if (deal.stageHistory) deal.stageHistory.sort((a: any, b: any) => new Date(b.changedAt).getTime() - new Date(a.changedAt).getTime());
-    if (deal.scenarios) deal.scenarios.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    if (deal.tasks) deal.tasks.sort((a: any, b: any) => {
+    // Manual sort and Filter Fix guards
+    const docRequests = Array.isArray(deal.docRequests) ? deal.docRequests : [];
+    const stageHistory = Array.isArray(deal.stageHistory) ? deal.stageHistory : [];
+    const scenarios = Array.isArray(deal.scenarios) ? deal.scenarios : [];
+    const tasks = Array.isArray(deal.tasks) ? deal.tasks : [];
+    const conditions = Array.isArray(deal.conditions) ? deal.conditions : [];
+
+    docRequests.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    stageHistory.sort((a: any, b: any) => new Date(b.changedAt).getTime() - new Date(a.changedAt).getTime());
+    scenarios.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    tasks.sort((a: any, b: any) => {
         if (!a.dueDate) return 1;
         if (!b.dueDate) return -1;
         return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
@@ -77,18 +83,18 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
 
     const stall = dealStallRisk(
         { id: deal.id, stage: deal.stage, updatedAt: deal.updatedAt, createdAt: deal.createdAt, fundingDate: deal.fundingDate, closingDate: deal.closingDate, priority: deal.priority },
-        deal.tasks.map((t: any) => ({ id: t.id, dueDate: t.dueDate, status: t.status, dealId: t.dealId })),
-        deal.conditions?.map((c: any) => ({ id: c.id, status: c.status })) ?? [],
-        deal.docRequests.map((d: any) => ({ id: d.id, status: d.status, createdAt: d.createdAt, expiresAt: d.expiresAt }))
+        tasks.map((t: any) => ({ id: t.id, dueDate: t.dueDate, status: t.status, dealId: t.dealId })),
+        conditions.map((c: any) => ({ id: c.id, status: c.status })),
+        docRequests.map((d: any) => ({ id: d.id, status: d.status, createdAt: d.createdAt, expiresAt: d.expiresAt }))
     );
     const docStats = documentCompleteness(
-        deal.docRequests.map((d: any) => ({ id: d.id, status: d.status, createdAt: d.createdAt, expiresAt: d.expiresAt }))
+        docRequests.map((d: any) => ({ id: d.id, status: d.status, createdAt: d.createdAt, expiresAt: d.expiresAt }))
     );
     const nbaForDeal = getNextBestActions(
         [{ id: deal.borrower.id, updatedAt: deal.borrower.updatedAt }],
         [{ id: deal.id, borrowerId: deal.borrowerId, stage: deal.stage, updatedAt: deal.updatedAt }],
-        deal.tasks.map((t: any) => ({ id: t.id, dueDate: t.dueDate, status: t.status, dealId: t.dealId, entityType: t.entityType, entityId: t.entityId })),
-        deal.docRequests.map((d: any) => ({ id: d.id, borrowerId: deal.borrowerId, dealId: deal.id, status: d.status, createdAt: d.createdAt }))
+        tasks.map((t: any) => ({ id: t.id, dueDate: t.dueDate, status: t.status, dealId: t.dealId, entityType: t.entityType, entityId: t.entityId })),
+        docRequests.map((d: any) => ({ id: d.id, borrowerId: deal.borrowerId, dealId: deal.id, status: d.status, createdAt: d.createdAt }))
     ).filter((a) => a.entityId === id).slice(0, 4);
 
     return (

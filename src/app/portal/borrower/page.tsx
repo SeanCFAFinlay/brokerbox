@@ -22,11 +22,14 @@ export default async function BorrowerPortalDashboard() {
         return <div style={{ padding: 40 }}><h2>Borrower Profile Not Found</h2><Link href="/borrowers">Go to Borrowers</Link></div>;
     }
 
-    // Manual sort because Supabase SDK doesn't support nested order by easily in JS client for sub-queries
-    if (borrower.deals) (borrower.deals as any[]).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-    if (borrower.docRequests) (borrower.docRequests as any[]).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    // Manual sort and Filter Fix guards
+    const deals = Array.isArray(borrower.deals) ? borrower.deals : [];
+    const docRequests = Array.isArray(borrower.docRequests) ? borrower.docRequests : [];
 
-    const pendingDocs = (borrower.docRequests as any[] || []).filter(dr => dr.status === 'requested');
+    deals.sort((a: any, b: any) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    docRequests.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    const pendingDocs = docRequests.filter((dr: any) => dr.status === 'requested');
 
     return (
         <div style={{ maxWidth: 1000, margin: '0 auto', padding: '40px 20px' }}>
@@ -42,11 +45,11 @@ export default async function BorrowerPortalDashboard() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                     <div className={s.card}>
                         <div className={s.cardTitle}>My Applications</div>
-                        {(borrower.deals as any[] || []).length === 0 ? (
+                        {deals.length === 0 ? (
                             <div className={s.emptyState}>No active mortgage applications found.</div>
                         ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                                {(borrower.deals as any[] || []).map(deal => (
+                                {deals.map(deal => (
                                     <div key={deal.id} style={{ border: '1px solid var(--bb-border)', borderRadius: 12, padding: 20 }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                                             <div style={{ fontWeight: 700, fontSize: 16 }}>{deal.propertyAddress || 'Unnamed Application'}</div>

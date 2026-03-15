@@ -18,8 +18,8 @@ export default async function BorrowerDocumentsPage() {
 
     if (error || !borrower) return <div>Borrower not found</div>;
 
-    const docRequests = (borrower.docRequests as any[] || []);
-    // Manual sort
+    const docRequests = Array.isArray(borrower.docRequests) ? borrower.docRequests : [];
+    // Manual sort and Filter Fix guards
     docRequests.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     return (

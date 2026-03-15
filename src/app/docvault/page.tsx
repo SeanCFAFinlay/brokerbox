@@ -23,7 +23,7 @@ export default function DocVaultPage() {
     const [borrowerDeals, setBorrowerDeals] = useState<Deal[]>([]);
 
     useEffect(() => {
-        fetch('/api/borrowers').then(r => r.json()).then(setBorrowers);
+        fetch('/api/borrowers').then(r => r.json()).then(data => setBorrowers(Array.isArray(data) ? data : []));
         loadDocs();
     }, []);
 
@@ -38,7 +38,7 @@ export default function DocVaultPage() {
     }, [selectedBorrower]);
 
     function loadDocs() {
-        fetch('/api/docvault').then(r => r.json()).then(setDocs);
+        fetch('/api/docvault').then(r => r.json()).then(data => setDocs(Array.isArray(data) ? data : []));
     }
 
     async function handleCreate(e: React.FormEvent<HTMLFormElement>) {

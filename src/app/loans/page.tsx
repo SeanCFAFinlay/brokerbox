@@ -10,7 +10,7 @@ export default async function LoansPage() {
         .select('*, deal:Deal(*, borrower:Borrower(*), lender:Lender(*))')
         .order('fundedDate', { ascending: false });
 
-    const loans = loansData || [];
+    const loans = Array.isArray(loansData) ? loansData : [];
     const activeLoans = loans.filter((l: any) => l.status === 'active');
     const totalAUM = activeLoans.reduce((sum: number, l: any) => sum + (l.principalBalance || 0), 0);
 

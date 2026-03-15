@@ -16,9 +16,9 @@ export default async function ReportsPage() {
         supabase.from('Borrower').select('*')
     ]);
 
-    const deals = dealsData || [];
-    const lenders = lendersData || [];
-    const borrowers = borrowersData || [];
+    const deals = Array.isArray(dealsData) ? dealsData : [];
+    const lenders = Array.isArray(lendersData) ? lendersData : [];
+    const borrowers = Array.isArray(borrowersData) ? borrowersData : [];
 
     const dealDtos = deals.map((d: any) => ({
         id: d.id,

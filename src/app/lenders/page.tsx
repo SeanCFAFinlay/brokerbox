@@ -11,7 +11,7 @@ export default async function LendersPage() {
         .select('*, deals:Deal(count)')
         .order('name', { ascending: true });
 
-    const lenders = (lendersData || []).map(l => ({
+    const lenders = (Array.isArray(lendersData) ? lendersData : []).map(l => ({
         ...l,
         _count: { deals: (l.deals as any || [])[0]?.count || 0 }
     }));

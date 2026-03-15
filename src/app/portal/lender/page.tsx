@@ -17,7 +17,7 @@ export default async function LenderDashboard() {
         return <div style={{ padding: 40 }}><h2>No Lenders Found</h2><p>Please create a lender in the Broker CRM first.</p><Link href="/lenders">Go to Lenders</Link></div>;
     }
 
-    const deals = lender.deals as any[] || [];
+    const deals = Array.isArray(lender.deals) ? lender.deals : [];
     const activeDeals = deals.filter(d => ['committed', 'in_review', 'matched'].includes(d.stage));
     const fundedDeals = deals.filter(d => d.stage === 'funded');
 
@@ -26,7 +26,7 @@ export default async function LenderDashboard() {
 
     const utilization = (lender.capitalAvailable || 0) > 0 ? (totalFunded / lender.capitalAvailable) * 100 : 0;
 
-    // Manual sort
+    // Manual sort and Filter Fix guards
     activeDeals.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 
     return (

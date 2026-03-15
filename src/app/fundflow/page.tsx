@@ -17,8 +17,8 @@ export default async function FundFlowPage() {
         .in('stage', ['in_review', 'matched', 'committed', 'funded'])
         .order('closingDate', { ascending: true });
 
-    const lenders = lendersData || [];
-    const activeDeals = dealsData || [];
+    const lenders = Array.isArray(lendersData) ? lendersData : [];
+    const activeDeals = Array.isArray(dealsData) ? dealsData : [];
 
     // Lender Capital Stats
     const totalAvailable = lenders.reduce((sum, l: any) => sum + (l.capitalAvailable || 0), 0);

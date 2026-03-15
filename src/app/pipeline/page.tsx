@@ -11,7 +11,7 @@ export default async function PipelineDashboard() {
     .select('*, borrower:Borrower(*), lender:Lender(*)')
     .order('updatedAt', { ascending: false });
 
-  const deals = dealsData || [];
+  const deals = Array.isArray(dealsData) ? dealsData : [];
   const stages = ['intake', 'in_review', 'matched', 'committed', 'funded'];
 
   const stageColor = (stage: string) =>

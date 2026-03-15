@@ -19,17 +19,21 @@ export default async function BorrowerDetailPage({ params }: { params: Promise<{
 
     if (error || !borrower) return notFound();
 
-    // Manual sort as nested selects don't guarantee order in Supabase SDK directly without extra params
-    if (borrower.deals) borrower.deals.sort((a: any, b: any) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-    if (borrower.scenarios) borrower.scenarios.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    if (borrower.docRequests) borrower.docRequests.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    // Manual sort and Filter Fix guards
+    const deals = Array.isArray(borrower.deals) ? borrower.deals : [];
+    const scenarios = Array.isArray(borrower.scenarios) ? borrower.scenarios : [];
+    const docRequests = Array.isArray(borrower.docRequests) ? borrower.docRequests : [];
+
+    deals.sort((a: any, b: any) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    scenarios.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    docRequests.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     const freshness = leadFreshness(
         { id: borrower.id, updatedAt: borrower.updatedAt },
-        borrower.deals[0]?.updatedAt
+        deals[0]?.updatedAt
     );
     const docStats = documentCompleteness(
-        borrower.docRequests.map((d: any) => ({
+        docRequests.map((d: any) => ({
             id: d.id,
             status: d.status,
             createdAt: d.createdAt,
@@ -38,9 +42,9 @@ export default async function BorrowerDetailPage({ params }: { params: Promise<{
     );
     const nbaForBorrower = getNextBestActions(
         [{ id: borrower.id, updatedAt: borrower.updatedAt }],
-        borrower.deals.map((d: any) => ({ id: d.id, borrowerId: d.borrowerId, stage: d.stage, updatedAt: d.updatedAt })),
+        deals.map((d: any) => ({ id: d.id, borrowerId: d.borrowerId, stage: d.stage, updatedAt: d.updatedAt })),
         [],
-        borrower.docRequests.map((d: any) => ({ id: d.id, borrowerId: d.borrowerId, dealId: d.dealId, status: d.status, createdAt: d.createdAt }))
+        docRequests.map((d: any) => ({ id: d.id, borrowerId: d.borrowerId, dealId: d.dealId, status: d.status, createdAt: d.createdAt }))
     ).filter((a) => a.entityId === id).slice(0, 3);
 
     return (

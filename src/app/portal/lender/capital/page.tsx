@@ -15,7 +15,7 @@ export default async function LenderCapitalPage() {
 
     if (error || !lender) return <div style={{ padding: 40 }}><h2>Lender Access Restricted</h2></div>;
 
-    const pools = (lender.capitalPools as any[] || []).map(p => ({
+    const pools = (Array.isArray(lender.capitalPools) ? lender.capitalPools : []).map(p => ({
         ...p,
         utilizationRate: p.utilizationRate || 0
     }));

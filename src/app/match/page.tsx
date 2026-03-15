@@ -19,7 +19,7 @@ export default function MatchPage() {
     const [expanded, setExpanded] = useState<string | null>(null);
 
     useEffect(() => {
-        fetch('/api/borrowers').then(r => r.json()).then(setBorrowers);
+        fetch('/api/borrowers').then(r => r.json()).then(data => setBorrowers(Array.isArray(data) ? data : []));
     }, []);
 
     async function runMatch() {

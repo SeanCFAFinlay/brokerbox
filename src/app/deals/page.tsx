@@ -18,7 +18,7 @@ export default async function DealsPage({ searchParams }: { searchParams: Promis
         .select('*, borrower:Borrower(*), lender:Lender(*)')
         .order('updatedAt', { ascending: false });
 
-    const dealsList = deals || [];
+    const dealsList = Array.isArray(deals) ? deals : [];
     const activePipeline = dealsList.filter(d => d.stage !== 'declined' && d.stage !== 'archived');
     const totalVolume = activePipeline.reduce((sum, d) => sum + (d.loanAmount || 0), 0);
 

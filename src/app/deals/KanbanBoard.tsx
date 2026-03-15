@@ -23,7 +23,8 @@ interface KanbanBoardProps {
 }
 
 export function KanbanBoard({ initialDeals, stages }: KanbanBoardProps) {
-    const [deals, setDeals] = useState<DealType[]>(initialDeals);
+    const [deals, setDeals] = useState<DealType[]>(Array.isArray(initialDeals) ? initialDeals : []);
+    const safeStages = Array.isArray(stages) ? stages : [];
     const [activeId, setActiveId] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
 
@@ -114,7 +115,7 @@ export function KanbanBoard({ initialDeals, stages }: KanbanBoardProps) {
                 onDragEnd={handleDragEnd}
             >
                 <div className={s.columnsContainer}>
-                    {stages.map(stage => (
+                    {safeStages.map(stage => (
                         <KanbanColumn
                             key={stage}
                             stage={stage}
