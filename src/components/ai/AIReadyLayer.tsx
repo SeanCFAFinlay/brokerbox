@@ -1,4 +1,3 @@
-import prisma from '@/lib/prisma';
 import s from '@/styles/shared.module.css';
 
 export default async function AIUnderwritingLayout({ children }: { children: React.ReactNode }) {

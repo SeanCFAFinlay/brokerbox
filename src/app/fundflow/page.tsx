@@ -1,33 +1,48 @@
-import prisma from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import s from '@/styles/shared.module.css';
 
 export const dynamic = 'force-dynamic';
 
 export default async function FundFlowPage() {
-    const lenders = await prisma.lender.findMany({
-        where: { status: 'active' },
-        orderBy: { name: 'asc' },
-    });
+    const { data: lendersData } = await supabase
+        .from('Lender')
+        .select('*')
+        .eq('status', 'active')
+        .order('name', { ascending: true });
 
-    const activeDeals = await prisma.deal.findMany({
-        where: { stage: { in: ['in_review', 'matched', 'committed', 'funded'] } },
-        include: { borrower: true, lender: true },
-        orderBy: { closingDate: 'asc' },
-    });
+    const { data: dealsData } = await supabase
+        .from('Deal')
+        .select('*, borrower:Borrower(*), lender:Lender(*)')
+        .in('stage', ['in_review', 'matched', 'committed', 'funded'])
+        .order('closingDate', { ascending: true });
+
+    const lenders = lendersData || [];
+    const activeDeals = dealsData || [];
 
     // Lender Capital Stats
-    const totalAvailable = lenders.reduce((sum, l) => sum + l.capitalAvailable, 0);
-    const totalCommitted = lenders.reduce((sum, l) => sum + l.capitalCommitted, 0);
+    const totalAvailable = lenders.reduce((sum, l: any) => sum + (l.capitalAvailable || 0), 0);
+    const totalCommitted = lenders.reduce((sum, l: any) => sum + (l.capitalCommitted || 0), 0);
 
     // Deal Stats
-    const fundedYTD = activeDeals.filter(d => d.stage === 'funded' && d.fundingDate && new Date(d.fundingDate).getFullYear() === new Date().getFullYear()).reduce((sum, d) => sum + d.loanAmount, 0);
-    const committedPipeline = activeDeals.filter(d => d.stage === 'committed').reduce((sum, d) => sum + d.loanAmount, 0);
+    const currentYear = new Date().getFullYear();
+    const fundedYTD = activeDeals
+        .filter((d: any) => d.stage === 'funded' && d.fundingDate && new Date(d.fundingDate).getFullYear() === currentYear)
+        .reduce((sum, d: any) => sum + (d.loanAmount || 0), 0);
+    const committedPipeline = activeDeals
+        .filter((d: any) => d.stage === 'committed')
+        .reduce((sum, d: any) => sum + (d.loanAmount || 0), 0);
 
     // Upcoming Closings (Next 30 days)
+    const now = new Date();
     const thirtyDaysFromNow = new Date();
     thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-    const upcomingClosings = activeDeals.filter(d => d.stage !== 'funded' && d.closingDate && new Date(d.closingDate) <= thirtyDaysFromNow && new Date(d.closingDate) >= new Date());
+    const upcomingClosings = activeDeals.filter((d: any) => 
+        d.stage !== 'funded' && 
+        d.closingDate && 
+        new Date(d.closingDate) <= thirtyDaysFromNow && 
+        new Date(d.closingDate) >= now
+    );
 
     return (
         <>
@@ -63,15 +78,15 @@ export default async function FundFlowPage() {
                             <tr><th>Lender</th><th>Available</th><th>Committed</th><th>Utilization</th></tr>
                         </thead>
                         <tbody>
-                            {lenders.map(l => {
-                                const utilization = l.capitalAvailable + l.capitalCommitted > 0
+                            {lenders.map((l: any) => {
+                                const utilization = (l.capitalAvailable || 0) + (l.capitalCommitted || 0) > 0
                                     ? (l.capitalCommitted / (l.capitalAvailable + l.capitalCommitted)) * 100
                                     : 0;
                                 return (
                                     <tr key={l.id}>
                                         <td><Link href={`/lenders/${l.id}`} style={{ fontWeight: 600, color: 'var(--bb-accent)' }}>{l.name}</Link></td>
-                                        <td>${(l.capitalAvailable / 1e6).toFixed(1)}M</td>
-                                        <td>${(l.capitalCommitted / 1e6).toFixed(1)}M</td>
+                                        <td>${((l.capitalAvailable || 0) / 1e6).toFixed(1)}M</td>
+                                        <td>${((l.capitalCommitted || 0) / 1e6).toFixed(1)}M</td>
                                         <td>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                                 <div style={{ flex: 1, backgroundColor: 'var(--bb-border)', height: 6, borderRadius: 3, overflow: 'hidden' }}>
@@ -93,16 +108,16 @@ export default async function FundFlowPage() {
                         <div className={s.emptyState}>No imminent closings scheduled.</div>
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                            {upcomingClosings.map(d => (
+                            {upcomingClosings.map((d: any) => (
                                 <div key={d.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', border: '1px solid var(--bb-border)', borderRadius: 8, backgroundColor: 'var(--bb-bg)' }}>
                                     <div>
-                                        <div style={{ fontWeight: 600 }}><Link href={`/deals/${d.id}`} style={{ color: 'var(--bb-text)' }}>{d.borrower.firstName} {d.borrower.lastName}</Link></div>
+                                        <div style={{ fontWeight: 600 }}><Link href={`/deals/${d.id}`} style={{ color: 'var(--bb-text)' }}>{d.borrower?.firstName} {d.borrower?.lastName}</Link></div>
                                         <div style={{ fontSize: 13, color: 'var(--bb-muted)', marginTop: 4 }}>
                                             {d.lender ? <span style={{ color: 'var(--bb-accent)' }}>{d.lender.name}</span> : 'Unassigned Lender'} • {d.position} Mortgage
                                         </div>
                                     </div>
                                     <div style={{ textAlign: 'right' }}>
-                                        <div style={{ fontWeight: 700, fontSize: 16 }}>${d.loanAmount.toLocaleString()}</div>
+                                        <div style={{ fontWeight: 700, fontSize: 16 }}>${d.loanAmount?.toLocaleString()}</div>
                                         <div style={{ fontSize: 12, color: 'var(--bb-danger)', fontWeight: 600, marginTop: 4 }}>{new Date(d.closingDate!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
                                     </div>
                                 </div>
@@ -112,16 +127,16 @@ export default async function FundFlowPage() {
 
                     <div className={s.cardTitle} style={{ marginTop: 32 }}>Recently Funded</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                        {activeDeals.filter(d => d.stage === 'funded').slice(0, 5).map(d => (
+                        {activeDeals.filter((d: any) => d.stage === 'funded').slice(0, 5).map((d: any) => (
                             <div key={d.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', border: '1px solid var(--bb-border)', borderRadius: 8 }}>
                                 <div>
-                                    <div style={{ fontWeight: 600 }}><Link href={`/deals/${d.id}`} style={{ color: 'var(--bb-text)' }}>{d.borrower.firstName} {d.borrower.lastName}</Link></div>
+                                    <div style={{ fontWeight: 600 }}><Link href={`/deals/${d.id}`} style={{ color: 'var(--bb-text)' }}>{d.borrower?.firstName} {d.borrower?.lastName}</Link></div>
                                     <div style={{ fontSize: 13, color: 'var(--bb-muted)', marginTop: 4 }}>
                                         {d.lender?.name || 'Unknown Lender'}
                                     </div>
                                 </div>
                                 <div style={{ textAlign: 'right' }}>
-                                    <div style={{ fontWeight: 600, color: 'var(--bb-success)' }}>${d.loanAmount.toLocaleString()}</div>
+                                    <div style={{ fontWeight: 600, color: 'var(--bb-success)' }}>${d.loanAmount?.toLocaleString()}</div>
                                     {d.fundingDate && <div style={{ fontSize: 12, color: 'var(--bb-muted)', marginTop: 4 }}>{new Date(d.fundingDate).toLocaleDateString()}</div>}
                                 </div>
                             </div>

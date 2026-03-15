@@ -1,23 +1,22 @@
-import prisma from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import s from '@/styles/shared.module.css';
 
 export const dynamic = 'force-dynamic';
 
 export default async function LenderDealsPage() {
-    const lender = await prisma.lender.findFirst({
-        where: { status: 'active' },
-        include: {
-            deals: {
-                include: { borrower: true },
-                orderBy: { updatedAt: 'desc' }
-            }
-        }
-    });
+    const { data: lender, error } = await supabase
+        .from('Lender')
+        .select('*, deals:Deal(*, borrower:Borrower(*))')
+        .eq('status', 'active')
+        .limit(1)
+        .single();
 
-    if (!lender) return <div>No Lender Found</div>;
+    if (error || !lender) return <div>No Lender Found</div>;
 
-    const deals = lender.deals;
+    const deals = lender.deals as any[] || [];
+    // Manual sort
+    deals.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 
     const stageColor = (st: string) => st === 'funded' ? s.pillGreen : st === 'committed' ? s.pillBlue : st === 'declined' ? s.pillRed : s.pillYellow;
 
@@ -44,11 +43,11 @@ export default async function LenderDealsPage() {
                     <tbody>
                         {deals.map(d => (
                             <tr key={d.id}>
-                                <td><div style={{ fontWeight: 600 }}>{d.borrower.firstName} {d.borrower.lastName}</div></td>
+                                <td><div style={{ fontWeight: 600 }}>{d.borrower?.firstName} {d.borrower?.lastName}</div></td>
                                 <td>{d.propertyAddress || 'Unnamed Deal'}</td>
-                                <td>${d.loanAmount.toLocaleString()}</td>
+                                <td>${d.loanAmount?.toLocaleString()}</td>
                                 <td>{d.ltv ? `${d.ltv.toFixed(1)}%` : '—'}</td>
-                                <td><span className={`${s.pill} ${stageColor(d.stage)}`}>{d.stage.replace('_', ' ').toUpperCase()}</span></td>
+                                <td><span className={`${s.pill} ${stageColor(d.stage)}`}>{d.stage?.replace('_', ' ').toUpperCase()}</span></td>
                                 <td style={{ fontSize: 13, color: 'var(--bb-muted)' }}>{new Date(d.createdAt).toLocaleDateString()}</td>
                                 <td><Link href={`/portal/lender/deals/${d.id}`} className={`${s.btn} ${s.btnSecondary} ${s.btnSmall}`}>Review</Link></td>
                             </tr>

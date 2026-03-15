@@ -1,56 +1,54 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 import { logAudit } from '@/lib/audit';
 
 export async function POST(req: NextRequest) {
-    const body = await req.json();
+    try {
+        const body = await req.json();
 
-    const amount = Number(body.amount);
-    if (!amount || amount <= 0) {
-        return NextResponse.json({ error: 'Valid investment amount is required' }, { status: 400 });
-    }
+        const amount = Number(body.amount);
+        if (!amount || amount <= 0) {
+            return NextResponse.json({ error: 'Valid investment amount is required' }, { status: 400 });
+        }
 
-    // Use a transaction to ensure pool totals are updated atomically
-    const inv = await prisma.$transaction(async (tx) => {
-        const pool = await tx.capitalPool.findUnique({ where: { id: body.poolId } });
-        if (!pool) throw new Error('Pool not found');
+        // Note: Sequential calls due to lack of client-side transactions
+        const { data: pool, error: poolError } = await supabase.from('CapitalPool').select('*').eq('id', body.poolId).single();
+        if (poolError || !pool) throw new Error('Pool not found');
 
-        const newInvestment = await tx.investment.create({
-            data: {
-                amount,
-                yield: Number(body.yield) || pool.targetYield,
-                poolId: body.poolId,
-                userId: body.userId,
-                status: 'active'
-            }
-        });
+        const { data: newInvestment, error: invError } = await supabase.from('Investment').insert({
+            amount,
+            yield: Number(body.yield) || pool.targetYield,
+            poolId: body.poolId,
+            userId: body.userId,
+            status: 'active'
+        }).select().single();
+
+        if (invError) throw invError;
 
         // Adding an investment increases both total capacity and currently available dry powder
         const newTotal = pool.totalAmount + amount;
         const newAvailable = pool.availableAmount + amount;
         const newUtilization = ((newTotal - newAvailable) / (newTotal || 1)) * 100;
 
-        await tx.capitalPool.update({
-            where: { id: body.poolId },
-            data: {
-                totalAmount: newTotal,
-                availableAmount: newAvailable,
-                utilizationRate: newUtilization
-            }
-        });
+        await supabase.from('CapitalPool').update({
+            totalAmount: newTotal,
+            availableAmount: newAvailable,
+            utilizationRate: newUtilization
+        }).eq('id', body.poolId);
 
         // Also update the lender's total capital available summary
-        await tx.lender.update({
-            where: { id: pool.lenderId },
-            data: {
-                capitalAvailable: { increment: amount }
-            }
-        });
+        const { data: lender } = await supabase.from('Lender').select('capitalAvailable').eq('id', pool.lenderId).single();
+        if (lender) {
+            await supabase.from('Lender').update({
+                capitalAvailable: lender.capitalAvailable + amount
+            }).eq('id', pool.lenderId);
+        }
 
-        return newInvestment;
-    });
+        await logAudit('Investment', newInvestment.id, 'CREATE', undefined, { amount });
 
-    await logAudit('Investment', (inv as any).id, 'CREATE', undefined, { amount });
-
-    return NextResponse.json(inv, { status: 201 });
+        return NextResponse.json(newInvestment, { status: 201 });
+    } catch (err: any) {
+        console.error(err);
+        return NextResponse.json({ error: err.message || 'Investment failed' }, { status: 500 });
+    }
 }

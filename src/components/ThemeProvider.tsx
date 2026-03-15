@@ -2,7 +2,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 
 type Theme = 'dark' | 'light';
-const Ctx = createContext<{ theme: Theme; toggle: () => void }>({ theme: 'dark', toggle: () => { } });
+const Ctx = createContext<{ theme: Theme; mounted: boolean; toggle: () => void }>({ theme: 'dark', mounted: false, toggle: () => { } });
 export const useTheme = () => useContext(Ctx);
 
 export default function ThemeProvider({ children }: { children: ReactNode }) {
@@ -26,5 +26,5 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
 
     const toggle = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
 
-    return <Ctx.Provider value={{ theme, toggle }}>{children}</Ctx.Provider>;
+    return <Ctx.Provider value={{ theme, mounted, toggle }}>{children}</Ctx.Provider>;
 }

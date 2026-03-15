@@ -25,7 +25,7 @@ const NAV = [
 
 export default function Sidebar() {
     const pathname = usePathname();
-    const { theme, toggle: toggleTheme } = useTheme();
+    const { theme, mounted, toggle: toggleTheme } = useTheme();
     const { isOpen, close } = useSidebar();
 
     return (
@@ -37,7 +37,6 @@ export default function Sidebar() {
                         <span className={styles.logoIcon}>◆</span>
                         <span className={styles.logoText}>BrokerBox</span>
                     </div>
-                    <button className={styles.closeBtn} onClick={close}>✕</button>
                     <button className={styles.closeBtn} onClick={close}>✕</button>
                 </div>
 
@@ -56,7 +55,7 @@ export default function Sidebar() {
 
                 <div className={styles.bottom}>
                     <button className={styles.themeBtn} onClick={toggleTheme}>
-                        {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
+                        {!mounted ? '...' : (theme === 'dark' ? '☀️ Light' : '🌙 Dark')}
                     </button>
                     <div className={styles.user}>
                         <div className={styles.avatar}>DB</div>

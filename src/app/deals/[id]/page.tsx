@@ -1,4 +1,4 @@
-import prisma from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import s from '@/styles/shared.module.css';
 import { notFound } from 'next/navigation';
@@ -23,28 +23,21 @@ const stageColor = (stage: string) =>
 
 export default async function DealDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
-    const deal = await prisma.deal.findUnique({
-        where: { id },
-        include: {
-            borrower: true,
-            lender: true,
-            conditions: true,
-            docRequests: { include: { files: true }, orderBy: { createdAt: 'desc' } },
-            stageHistory: { orderBy: { changedAt: 'desc' } },
-            scenarios: { orderBy: { createdAt: 'desc' } },
-            tasks: { orderBy: { dueDate: 'asc' } },
-            loan: {
-                include: { payments: true, fees: true }
-            }
-        },
-    });
+    const { data: deal, error: dealError } = await supabase
+        .from('Deal')
+        .select('*, borrower:Borrower(*), lender:Lender(*), conditions:DealCondition(*), docRequests:DocRequest(*, files:DocumentFile(*)), stageHistory:DealStageHistory(*), scenarios:Scenario(*), tasks:Task(*), loan:Loan(*, payments:LoanPayment(*), fees:LoanFee(*))')
+        .eq('id', id)
+        .single();
 
-    if (!deal) return notFound();
+    if (dealError || !deal) return notFound();
 
-    const allLenders = await prisma.lender.findMany({ where: { status: 'active' }, select: { id: true, name: true } });
+    const { data: allLendersData } = await supabase.from('Lender').select('id, name').eq('status', 'active');
+    const allLenders = allLendersData || [];
 
     // Run match engine for top 3
-    const rawLenders = await prisma.lender.findMany({ where: { status: 'active' } });
+    const { data: rawLendersData } = await supabase.from('Lender').select('*').eq('status', 'active');
+    const rawLenders = rawLendersData || [];
+
     const borrowerData = {
         creditScore: deal.borrower?.creditScore || 0,
         income: deal.borrower?.income || 0,
@@ -64,7 +57,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
         termMonths: deal.termMonths
     };
     const lenders = rawLenders.map(l => ({
-        ...l, // Spread existing lender properties
+        ...l, 
         pricingPremium: l.pricingPremium,
         documentRequirements: l.documentRequirements,
         allowsSelfEmployed: (l as any).allowsSelfEmployed ?? true,
@@ -72,20 +65,30 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
     }));
     const matchResults = runMatch(borrowerData, dealData, lenders as any).slice(0, 3);
 
+    // Manual sort for nested results
+    if (deal.docRequests) deal.docRequests.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    if (deal.stageHistory) deal.stageHistory.sort((a: any, b: any) => new Date(b.changedAt).getTime() - new Date(a.changedAt).getTime());
+    if (deal.scenarios) deal.scenarios.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    if (deal.tasks) deal.tasks.sort((a: any, b: any) => {
+        if (!a.dueDate) return 1;
+        if (!b.dueDate) return -1;
+        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+    });
+
     const stall = dealStallRisk(
         { id: deal.id, stage: deal.stage, updatedAt: deal.updatedAt, createdAt: deal.createdAt, fundingDate: deal.fundingDate, closingDate: deal.closingDate, priority: deal.priority },
-        deal.tasks.map((t) => ({ id: t.id, dueDate: t.dueDate, status: t.status, dealId: t.dealId })),
-        deal.conditions?.map((c) => ({ id: c.id, status: c.status })) ?? [],
-        deal.docRequests.map((d) => ({ id: d.id, status: d.status, createdAt: d.createdAt, expiresAt: d.expiresAt }))
+        deal.tasks.map((t: any) => ({ id: t.id, dueDate: t.dueDate, status: t.status, dealId: t.dealId })),
+        deal.conditions?.map((c: any) => ({ id: c.id, status: c.status })) ?? [],
+        deal.docRequests.map((d: any) => ({ id: d.id, status: d.status, createdAt: d.createdAt, expiresAt: d.expiresAt }))
     );
     const docStats = documentCompleteness(
-        deal.docRequests.map((d) => ({ id: d.id, status: d.status, createdAt: d.createdAt, expiresAt: d.expiresAt }))
+        deal.docRequests.map((d: any) => ({ id: d.id, status: d.status, createdAt: d.createdAt, expiresAt: d.expiresAt }))
     );
     const nbaForDeal = getNextBestActions(
         [{ id: deal.borrower.id, updatedAt: deal.borrower.updatedAt }],
         [{ id: deal.id, borrowerId: deal.borrowerId, stage: deal.stage, updatedAt: deal.updatedAt }],
-        deal.tasks.map((t) => ({ id: t.id, dueDate: t.dueDate, status: t.status, dealId: t.dealId, entityType: t.entityType, entityId: t.entityId })),
-        deal.docRequests.map((d) => ({ id: d.id, borrowerId: deal.borrowerId, dealId: deal.id, status: d.status, createdAt: d.createdAt }))
+        deal.tasks.map((t: any) => ({ id: t.id, dueDate: t.dueDate, status: t.status, dealId: t.dealId, entityType: t.entityType, entityId: t.entityId })),
+        deal.docRequests.map((d: any) => ({ id: d.id, borrowerId: deal.borrowerId, dealId: deal.id, status: d.status, createdAt: d.createdAt }))
     ).filter((a) => a.entityId === id).slice(0, 4);
 
     return (
@@ -95,7 +98,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
                     <div>
                         <p style={{ fontSize: 13, color: 'var(--bb-muted)', marginBottom: 4 }}>
                             <Link href="/deals" style={{ color: 'var(--bb-accent)' }}>Deal Desk</Link> /
-                            <Link href={`/borrowers/${deal.borrowerId}`} style={{ color: 'var(--bb-accent)', marginLeft: 4 }}>{deal.borrower.firstName} {deal.borrower.lastName}</Link>
+                            <Link href={`/borrowers/${deal.borrowerId}`} style={{ color: 'var(--bb-accent)', marginLeft: 4 }}>{deal.borrower?.firstName} {deal.borrower?.lastName}</Link>
                         </p>
                         <h1>{deal.propertyAddress ? deal.propertyAddress : `Deal #${deal.id.slice(-6)}`}</h1>
                     </div>
@@ -125,8 +128,8 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
             )}
 
             <div className={s.kpiRow} style={{ marginBottom: 24 }}>
-                <div className={s.kpiCard}><div className={s.kpiLabel}>Loan Amount</div><div className={s.kpiValue}>${deal.loanAmount.toLocaleString()}</div></div>
-                <div className={s.kpiCard}><div className={s.kpiLabel}>Property Value</div><div className={s.kpiValue}>${deal.propertyValue.toLocaleString()}</div></div>
+                <div className={s.kpiCard}><div className={s.kpiLabel}>Loan Amount</div><div className={s.kpiValue}>${deal.loanAmount?.toLocaleString()}</div></div>
+                <div className={s.kpiCard}><div className={s.kpiLabel}>Property Value</div><div className={s.kpiValue}>${deal.propertyValue?.toLocaleString()}</div></div>
                 <div className={s.kpiCard}><div className={s.kpiLabel}>LTV</div><div className={s.kpiValue}>{deal.ltv ? `${deal.ltv.toFixed(1)}% ` : '—'}</div></div>
                 <div className={s.kpiCard}><div className={s.kpiLabel}>Position</div><div className={s.kpiValue}>{deal.position}</div></div>
                 <div className={s.kpiCard}><div className={s.kpiLabel}>Lender</div><div className={s.kpiValue} style={{ fontSize: 18 }}>{deal.lender?.name || 'Unassigned'}</div></div>
@@ -194,17 +197,21 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
                 {/* Borrower Summary */}
                 <div className={s.card}>
                     <div className={s.cardTitle}>Borrower Summary</div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, fontSize: 14 }}>
-                        <div><strong style={{ display: 'inline-block', width: 120 }}>Primary:</strong> {deal.borrower.firstName} {deal.borrower.lastName}</div>
-                        <div><strong style={{ display: 'inline-block', width: 120 }}>Email:</strong> {deal.borrower.email}</div>
-                        <div><strong style={{ display: 'inline-block', width: 120 }}>Phone:</strong> {deal.borrower.phone}</div>
-                        <div><strong style={{ display: 'inline-block', width: 120 }}>Income:</strong> ${deal.borrower.income.toLocaleString()} ({deal.borrower.borrowerType || 'employed'})</div>
-                        <div><strong style={{ display: 'inline-block', width: 120 }}>Credit Score:</strong> <span className={`${s.pill} ${deal.borrower.creditScore >= 700 ? s.pillGreen : deal.borrower.creditScore >= 600 ? s.pillYellow : s.pillRed} `}>{deal.borrower.creditScore}</span></div>
-                        {deal.borrower.coBorrowerName && (
-                            <div><strong style={{ display: 'inline-block', width: 120 }}>Co-Borrower:</strong> {deal.borrower.coBorrowerName}</div>
-                        )}
-                        <Link href={`/borrowers/${deal.borrowerId}`} className={`${s.btn} ${s.btnSecondary} ${s.btnSmall}`} style={{ alignSelf: 'flex-start', marginTop: 8 }}>View Full Profile</Link>
-                    </div>
+                    {deal.borrower ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, fontSize: 14 }}>
+                            <div><strong style={{ display: 'inline-block', width: 120 }}>Primary:</strong> {deal.borrower.firstName} {deal.borrower.lastName}</div>
+                            <div><strong style={{ display: 'inline-block', width: 120 }}>Email:</strong> {deal.borrower.email}</div>
+                            <div><strong style={{ display: 'inline-block', width: 120 }}>Phone:</strong> {deal.borrower.phone}</div>
+                            <div><strong style={{ display: 'inline-block', width: 120 }}>Income:</strong> ${deal.borrower.income?.toLocaleString()} ({deal.borrower.borrowerType || 'employed'})</div>
+                            <div><strong style={{ display: 'inline-block', width: 120 }}>Credit Score:</strong> <span className={`${s.pill} ${deal.borrower.creditScore >= 700 ? s.pillGreen : deal.borrower.creditScore >= 600 ? s.pillYellow : s.pillRed} `}>{deal.borrower.creditScore}</span></div>
+                            {deal.borrower.coBorrowerName && (
+                                <div><strong style={{ display: 'inline-block', width: 120 }}>Co-Borrower:</strong> {deal.borrower.coBorrowerName}</div>
+                            )}
+                            <Link href={`/borrowers/${deal.borrowerId}`} className={`${s.btn} ${s.btnSecondary} ${s.btnSmall}`} style={{ alignSelf: 'flex-start', marginTop: 8 }}>View Full Profile</Link>
+                        </div>
+                    ) : (
+                        <div className={s.emptyState}>No borrower linked.</div>
+                    )}
                 </div>
             </div>
 
@@ -220,7 +227,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
                     <table className={s.table}>
                         <thead><tr><th>Lender</th><th>Rate</th><th>Term</th><th>Monthly Payment</th><th>Rec</th></tr></thead>
                         <tbody>
-                            {deal.scenarios.map(sc => {
+                            {deal.scenarios.map((sc: any) => {
                                 const r = sc.results as Record<string, number>;
                                 const i = sc.inputs as Record<string, any>;
                                 return (
@@ -249,9 +256,9 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                             {deal.stageHistory.map((h: any) => (
                                 <div key={h.id} style={{ display: 'flex', gap: 12, alignItems: 'center', fontSize: 13, color: 'var(--bb-text-secondary)' }}>
-                                    <span className={`${s.pill} ${stageColor(h.fromStage)}`} style={{ fontSize: 11 }}>{h.fromStage.replace('_', ' ')}</span>
+                                    <span className={`${s.pill} ${stageColor(h.fromStage)}`} style={{ fontSize: 11 }}>{h.fromStage?.replace('_', ' ')}</span>
                                     <span>→</span>
-                                    <span className={`${s.pill} ${stageColor(h.toStage)}`} style={{ fontSize: 11 }}>{h.toStage.replace('_', ' ')}</span>
+                                    <span className={`${s.pill} ${stageColor(h.toStage)}`} style={{ fontSize: 11 }}>{h.toStage?.replace('_', ' ')}</span>
                                     <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--bb-muted)' }}>{new Date(h.changedAt).toLocaleDateString()}</span>
                                 </div>
                             ))}
@@ -261,16 +268,15 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
 
                 <div className={s.card}>
                     <div className={s.cardTitle}>Scheduled Milestones</div>
-                    {/* Filtered Calendar Events for this deal */}
                     <CalendarHighlights dealId={deal.id} />
 
                     {deal.loan ? (
                         <div style={{ marginTop: 24, padding: 16, background: 'var(--bb-surface-2)', borderRadius: 12 }}>
                             <div style={{ fontSize: 13, textTransform: 'uppercase', fontWeight: 600, color: 'var(--bb-muted)', marginBottom: 12 }}>Live Loan Stats</div>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                                <div><div style={{ fontSize: 12, color: 'var(--bb-muted)' }}>Balance</div><strong>${deal.loan.principalBalance.toLocaleString()}</strong></div>
+                                <div><div style={{ fontSize: 12, color: 'var(--bb-muted)' }}>Balance</div><strong>${deal.loan.principalBalance?.toLocaleString()}</strong></div>
                                 <div><div style={{ fontSize: 12, color: 'var(--bb-muted)' }}>Interest</div><strong>{deal.loan.interestRate}%</strong></div>
-                                <div><div style={{ fontSize: 12, color: 'var(--bb-muted)' }}>Maturity</div><strong>{deal.loan.maturityDate.toLocaleDateString()}</strong></div>
+                                <div><div style={{ fontSize: 12, color: 'var(--bb-muted)' }}>Maturity</div><strong>{deal.loan.maturityDate ? new Date(deal.loan.maturityDate).toLocaleDateString() : '—'}</strong></div>
                                 <div><div style={{ fontSize: 12, color: 'var(--bb-muted)' }}>Status</div><strong>{deal.loan.status}</strong></div>
                             </div>
                         </div>
@@ -308,7 +314,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
                     <table className={s.table}>
                         <thead><tr><th>Document</th><th>Status</th><th>Files</th><th>Notes</th></tr></thead>
                         <tbody>
-                            {deal.docRequests.map(dr => (
+                            {deal.docRequests.map((dr: any) => (
                                 <tr key={dr.id}>
                                     <td>
                                         <div style={{ fontWeight: 600 }}>{dr.docType}</div>

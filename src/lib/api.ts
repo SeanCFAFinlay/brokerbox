@@ -27,17 +27,22 @@ export function jsonError(message: string, status: number = 400) {
   return NextResponse.json({ error: message }, { status });
 }
 
-export function handlePrismaError(err: unknown): NextResponse {
-  const msg = err instanceof Error ? err.message : 'Database error';
-  if (msg.includes('Unique constraint') || msg.includes('P2002')) {
+export function handleDatabaseError(err: unknown): NextResponse {
+  const msg = err instanceof Error ? err.message : String(err);
+  console.error('Database error:', err);
+  
+  if (msg.includes('unique constraint') || msg.includes('23505')) {
     return NextResponse.json({ error: 'A record with this value already exists.' }, { status: 409 });
   }
-  if (msg.includes('Record to update not found') || msg.includes('P2025')) {
+  if (msg.includes('not found') || msg.includes('P2025')) {
     return NextResponse.json({ error: 'Not found.' }, { status: 404 });
   }
-  if (msg.includes('Foreign key') || msg.includes('P2003')) {
+  if (msg.includes('foreign key') || msg.includes('23503')) {
     return NextResponse.json({ error: 'Invalid reference (e.g. borrower or lender does not exist).' }, { status: 400 });
   }
-  console.error('API error:', err);
+  
   return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
 }
+
+// Keep handlePrismaError as alias for backward compatibility during migration if necessary
+export const handlePrismaError = handleDatabaseError;

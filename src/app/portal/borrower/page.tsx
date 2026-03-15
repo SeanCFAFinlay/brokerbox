@@ -1,4 +1,4 @@
-import prisma from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import s from '@/styles/shared.module.css';
 import FileUpload from '@/components/docvault/FileUpload';
@@ -7,25 +7,26 @@ export const dynamic = 'force-dynamic';
 
 export default async function BorrowerPortalDashboard() {
     // Mock authentication: pick the first active borrower
-    const borrower = await prisma.borrower.findFirst({
-        where: { status: 'active' },
-        include: {
-            deals: {
-                include: { lender: true },
-                orderBy: { updatedAt: 'desc' }
-            },
-            docRequests: {
-                include: { files: true },
-                orderBy: { createdAt: 'desc' }
-            }
-        }
-    });
+    const { data: borrower, error } = await supabase
+        .from('Borrower')
+        .select(`
+            *,
+            deals:Deal(*, lender:Lender(*)),
+            docRequests:DocRequest(*, files:DocumentFile(*))
+        `)
+        .eq('status', 'active')
+        .limit(1)
+        .single();
 
-    if (!borrower) {
+    if (error || !borrower) {
         return <div style={{ padding: 40 }}><h2>Borrower Profile Not Found</h2><Link href="/borrowers">Go to Borrowers</Link></div>;
     }
 
-    const pendingDocs = borrower.docRequests.filter(dr => dr.status === 'requested');
+    // Manual sort because Supabase SDK doesn't support nested order by easily in JS client for sub-queries
+    if (borrower.deals) (borrower.deals as any[]).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    if (borrower.docRequests) (borrower.docRequests as any[]).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    const pendingDocs = (borrower.docRequests as any[] || []).filter(dr => dr.status === 'requested');
 
     return (
         <div style={{ maxWidth: 1000, margin: '0 auto', padding: '40px 20px' }}>
@@ -41,20 +42,20 @@ export default async function BorrowerPortalDashboard() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                     <div className={s.card}>
                         <div className={s.cardTitle}>My Applications</div>
-                        {borrower.deals.length === 0 ? (
+                        {(borrower.deals as any[] || []).length === 0 ? (
                             <div className={s.emptyState}>No active mortgage applications found.</div>
                         ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                                {borrower.deals.map(deal => (
+                                {(borrower.deals as any[] || []).map(deal => (
                                     <div key={deal.id} style={{ border: '1px solid var(--bb-border)', borderRadius: 12, padding: 20 }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                                             <div style={{ fontWeight: 700, fontSize: 16 }}>{deal.propertyAddress || 'Unnamed Application'}</div>
-                                            <span className={`${s.pill} ${deal.stage === 'funded' ? s.pillGreen : s.stage === 'committed' ? s.pillBlue : s.pillYellow}`}>
-                                                {deal.stage.replace('_', ' ').toUpperCase()}
+                                            <span className={`${s.pill} ${deal.stage === 'funded' ? s.pillGreen : deal.stage === 'committed' ? s.pillBlue : s.pillYellow}`}>
+                                                {deal.stage?.replace('_', ' ').toUpperCase()}
                                             </span>
                                         </div>
                                         <div style={{ fontSize: 14, color: 'var(--bb-muted)', marginBottom: 16 }}>
-                                            Loan: ${deal.loanAmount.toLocaleString()} · {deal.lender?.name || 'In Matching Phase'}
+                                            Loan: ${deal.loanAmount?.toLocaleString()} · {deal.lender?.name || 'In Matching Phase'}
                                         </div>
 
                                         {/* Status Stepper */}
@@ -63,7 +64,6 @@ export default async function BorrowerPortalDashboard() {
                                             {['intake', 'in_review', 'matched', 'funded'].map((st, i) => {
                                                 const stages = ['intake', 'in_review', 'matched', 'committed', 'funded'];
                                                 const currentIndex = stages.indexOf(deal.stage);
-                                                const stepIndex = ['intake', 'in_review', 'matched', 'funded'].indexOf(st);
                                                 const isCompleted = currentIndex >= stages.indexOf(st);
                                                 return (
                                                     <div key={st} style={{ position: 'relative', zIndex: 1, textAlign: 'center', flex: 1 }}>

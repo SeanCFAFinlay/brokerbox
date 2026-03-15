@@ -1,30 +1,27 @@
-import prisma from '@/lib/prisma';
-import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
 import s from '@/styles/shared.module.css';
 import { CapitalPoolManager } from '@/components/lender/CapitalPoolManager';
 
 export const dynamic = 'force-dynamic';
 
 export default async function LenderCapitalPage() {
-    const lender = await prisma.lender.findFirst({
-        where: { status: 'active' },
-        include: {
-            capitalPools: {
-                orderBy: { createdAt: 'desc' }
-            }
-        }
-    });
+    // Auth validation mock: pick the first active lender
+    const { data: lender, error } = await supabase
+        .from('Lender')
+        .select('*, capitalPools:CapitalPool(*)')
+        .eq('status', 'active')
+        .limit(1)
+        .single();
 
-    if (!lender) return <div style={{ padding: 40 }}><h2>Lender Access Restricted</h2></div>;
+    if (error || !lender) return <div style={{ padding: 40 }}><h2>Lender Access Restricted</h2></div>;
 
-    const pools = lender.capitalPools.map(p => ({
+    const pools = (lender.capitalPools as any[] || []).map(p => ({
         ...p,
         utilizationRate: p.utilizationRate || 0
     }));
 
-    const totalManaged = pools.reduce((sum, p) => sum + p.totalAmount, 0);
-    const totalAvailable = pools.reduce((sum, p) => sum + p.availableAmount, 0);
-    const avgLTV = pools.length > 0 ? pools.reduce((sum, p) => sum + p.effectiveLTV, 0) / pools.length : 0;
+    // Manual sort
+    pools.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     return (
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 20px' }}>

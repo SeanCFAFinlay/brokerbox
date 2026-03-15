@@ -1,4 +1,4 @@
-import prisma from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import s from '@/styles/shared.module.css';
 import { notFound } from 'next/navigation';
@@ -9,19 +9,21 @@ export const dynamic = 'force-dynamic';
 
 export default async function LenderDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
-    const lender = await prisma.lender.findUnique({
-        where: { id },
-        include: {
-            deals: { include: { borrower: true }, orderBy: { updatedAt: 'desc' } },
-        },
-    });
+    const { data: lender, error } = await supabase
+        .from('Lender')
+        .select('*, deals:Deal(*, borrower:Borrower(*))')
+        .eq('id', id)
+        .single();
 
-    if (!lender) return notFound();
+    if (error || !lender) return notFound();
 
-    const activeDeals = lender.deals.filter(d => d.stage !== 'declined' && d.stage !== 'archived' && d.stage !== 'funded');
-    const fundedDeals = lender.deals.filter(d => d.stage === 'funded');
-    const totalFunded = fundedDeals.reduce((sum, d) => sum + d.loanAmount, 0);
-    const activePipeline = activeDeals.reduce((sum, d) => sum + d.loanAmount, 0);
+    // Manual sort
+    if (lender.deals) lender.deals.sort((a: any, b: any) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+
+    const activeDeals = (lender.deals || []).filter((d: any) => d.stage !== 'declined' && d.stage !== 'archived' && d.stage !== 'funded');
+    const fundedDeals = (lender.deals || []).filter((d: any) => d.stage === 'funded');
+    const totalFunded = fundedDeals.reduce((sum: number, d: any) => sum + (d.loanAmount || 0), 0);
+    const activePipeline = activeDeals.reduce((sum: number, d: any) => sum + (d.loanAmount || 0), 0);
 
     return (
         <>
@@ -34,14 +36,14 @@ export default async function LenderDetailPage({ params }: { params: Promise<{ i
                         <h1>{lender.name}</h1>
                     </div>
                     <span className={`${s.pill} ${lender.status === 'active' ? s.pillGreen : s.pillGray}`}>
-                        {lender.status.toUpperCase()}
+                        {lender.status?.toUpperCase()}
                     </span>
                 </div>
             </div>
 
             {/* Lender Stats */}
             <div className={s.kpiRow} style={{ marginBottom: 24 }}>
-                <div className={s.kpiCard}><div className={s.kpiLabel}>Available Capital</div><div className={s.kpiValue} style={{ color: 'var(--bb-accent)' }}>${(lender.capitalAvailable / 1e6).toFixed(1)}M</div></div>
+                <div className={s.kpiCard}><div className={s.kpiLabel}>Available Capital</div><div className={s.kpiValue} style={{ color: 'var(--bb-accent)' }}>${((lender.capitalAvailable || 0) / 1e6).toFixed(1)}M</div></div>
                 <div className={s.kpiCard}><div className={s.kpiLabel}>Active Pipeline</div><div className={s.kpiValue}>${(activePipeline / 1e6).toFixed(1)}M</div></div>
                 <div className={s.kpiCard}><div className={s.kpiLabel}>Total Funded</div><div className={s.kpiValue}>${(totalFunded / 1e6).toFixed(1)}M</div></div>
                 <div className={s.kpiCard}><div className={s.kpiLabel}>Active Deals</div><div className={s.kpiValue}>{activeDeals.length}</div></div>
@@ -101,16 +103,16 @@ export default async function LenderDetailPage({ params }: { params: Promise<{ i
             {/* Associated Deals */}
             <div className={s.card} style={{ marginTop: 24 }}>
                 <div className={s.cardTitle}>Deals Submitted to {lender.name}</div>
-                {lender.deals.length === 0 ? (
+                {(lender.deals || []).length === 0 ? (
                     <div className={s.emptyState}>No deals submitted yet.</div>
                 ) : (
                     <table className={s.table}>
                         <thead><tr><th>Borrower</th><th>Loan</th><th>LTV</th><th>Stage</th></tr></thead>
                         <tbody>
-                            {lender.deals.map(d => (
+                            {lender.deals.map((d: any) => (
                                 <tr key={d.id}>
-                                    <td><Link href={`/deals/${d.id}`} style={{ color: 'var(--bb-accent)', fontWeight: 600 }}>{d.borrower.firstName} {d.borrower.lastName}</Link></td>
-                                    <td>${d.loanAmount.toLocaleString()}</td>
+                                    <td><Link href={`/deals/${d.id}`} style={{ color: 'var(--bb-accent)', fontWeight: 600 }}>{d.borrower?.firstName} {d.borrower?.lastName}</Link></td>
+                                    <td>${d.loanAmount?.toLocaleString()}</td>
                                     <td>{d.ltv ? `${d.ltv.toFixed(1)}%` : '—'}</td>
                                     <td><span className={`${s.pill} ${d.stage === 'funded' ? s.pillGreen : d.stage === 'committed' ? s.pillBlue : s.pillGray}`}>{d.stage}</span></td>
                                 </tr>

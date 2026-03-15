@@ -1,4 +1,4 @@
-import { db } from '@/lib/db';
+import { supabase } from '@/lib/supabase';
 import s from '@/styles/shared.module.css';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { PipelineCommandCenter } from '@/components/dashboard/PipelineCommandCenter';
@@ -8,24 +8,27 @@ import { getNextBestActions } from '@/lib/domain';
 
 export const dynamic = 'force-dynamic';
 
-export default async function DashboardPage() {
-  // Fetch real data for the Command Center
-  const [deals, borrowers, tasks, docRequests, recentLogs] = await Promise.all([
-    db.deal.findMany({
-      select: { id: true, stage: true, loanAmount: true, borrowerId: true, updatedAt: true, createdAt: true, fundingDate: true },
-      orderBy: { updatedAt: 'desc' },
-      take: 200
-    }),
-    db.borrower.findMany({ where: { status: 'active' }, select: { id: true, updatedAt: true } }),
-    db.task.findMany({ where: { status: 'pending' }, take: 50 }),
-    db.docRequest.findMany({
-      where: { status: 'requested' },
-      include: { borrower: true },
-      orderBy: { createdAt: 'desc' },
-      take: 10,
-    }),
-    db.dealActivity.findMany({ orderBy: { timestamp: 'desc' }, take: 8 }),
+export default async function Page() {
+  // Fetch real data using pure Supabase client
+  const [
+    { data: dealsData },
+    { data: borrowersData },
+    { data: tasksData },
+    { data: docRequestsData },
+    { data: recentLogsData }
+  ] = await Promise.all([
+    supabase.from('Deal').select('id, stage, loanAmount, borrowerId, updatedAt, createdAt, fundingDate').order('updatedAt', { ascending: false }).limit(200),
+    supabase.from('Borrower').select('id, updatedAt').eq('status', 'active'),
+    supabase.from('Task').select('*').eq('status', 'pending').limit(50),
+    supabase.from('DocRequest').select('*, borrower:Borrower(*)').eq('status', 'requested').order('createdAt', { ascending: false }).limit(10),
+    supabase.from('DealActivity').select('*').order('timestamp', { ascending: false }).limit(8),
   ]);
+
+  const deals = Array.isArray(dealsData) ? dealsData : [];
+  const borrowers = Array.isArray(borrowersData) ? borrowersData : [];
+  const tasks = Array.isArray(tasksData) ? tasksData : [];
+  const docRequests = Array.isArray(docRequestsData) ? docRequestsData : [];
+  const recentLogs = Array.isArray(recentLogsData) ? recentLogsData : [];
 
   // Map data for NBA
   const nbaActions = getNextBestActions(

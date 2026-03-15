@@ -1,4 +1,4 @@
-import prisma from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import s from '@/styles/shared.module.css';
 
@@ -6,27 +6,28 @@ export const dynamic = 'force-dynamic';
 
 export default async function LenderDashboard() {
     // Mock authentication: pick the first active lender
-    const lender = await prisma.lender.findFirst({
-        where: { status: 'active' },
-        include: {
-            deals: {
-                include: { borrower: true },
-                orderBy: { updatedAt: 'desc' }
-            }
-        }
-    });
+    const { data: lender, error } = await supabase
+        .from('Lender')
+        .select('*, deals:Deal(*, borrower:Borrower(*))')
+        .eq('status', 'active')
+        .limit(1)
+        .single();
 
-    if (!lender) {
+    if (error || !lender) {
         return <div style={{ padding: 40 }}><h2>No Lenders Found</h2><p>Please create a lender in the Broker CRM first.</p><Link href="/lenders">Go to Lenders</Link></div>;
     }
 
-    const activeDeals = lender.deals.filter(d => ['committed', 'in_review', 'matched'].includes(d.stage));
-    const fundedDeals = lender.deals.filter(d => d.stage === 'funded');
+    const deals = lender.deals as any[] || [];
+    const activeDeals = deals.filter(d => ['committed', 'in_review', 'matched'].includes(d.stage));
+    const fundedDeals = deals.filter(d => d.stage === 'funded');
 
-    const totalPipeline = activeDeals.reduce((sum, d) => sum + d.loanAmount, 0);
-    const totalFunded = fundedDeals.reduce((sum, d) => sum + d.loanAmount, 0);
+    const totalPipeline = activeDeals.reduce((sum, d) => sum + (d.loanAmount || 0), 0);
+    const totalFunded = fundedDeals.reduce((sum, d) => sum + (d.loanAmount || 0), 0);
 
-    const utilization = lender.capitalAvailable > 0 ? (totalFunded / lender.capitalAvailable) * 100 : 0;
+    const utilization = (lender.capitalAvailable || 0) > 0 ? (totalFunded / lender.capitalAvailable) * 100 : 0;
+
+    // Manual sort
+    activeDeals.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 
     return (
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 20px' }}>
@@ -37,7 +38,7 @@ export default async function LenderDashboard() {
                 </div>
                 <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: 13, color: 'var(--bb-muted)' }}>Capital Available</div>
-                    <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--bb-success)' }}>${lender.capitalAvailable.toLocaleString()}</div>
+                    <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--bb-success)' }}>${lender.capitalAvailable?.toLocaleString()}</div>
                     <Link href="/portal/lender/capital" style={{ fontSize: 13, color: 'var(--bb-accent)', textDecoration: 'none' }}>Manage Capital & Pools →</Link>
                 </div>
             </div>
@@ -81,11 +82,11 @@ export default async function LenderDashboard() {
                             {activeDeals.slice(0, 5).map(d => (
                                 <tr key={d.id}>
                                     <td style={{ fontWeight: 600 }}>{d.propertyAddress || 'Unnamed Deal'}</td>
-                                    <td>{d.borrower.firstName} {d.borrower.lastName}</td>
-                                    <td>${d.loanAmount.toLocaleString()}</td>
+                                    <td>{d.borrower?.firstName} {d.borrower?.lastName}</td>
+                                    <td>${d.loanAmount?.toLocaleString()}</td>
                                     <td>
                                         <span className={`${s.pill} ${d.stage === 'committed' ? s.pillBlue : s.pillYellow}`}>
-                                            {d.stage.replace('_', ' ').toUpperCase()}
+                                            {d.stage?.replace('_', ' ').toUpperCase()}
                                         </span>
                                     </td>
                                     <td>{d.ltv ? `${d.ltv.toFixed(1)}%` : '—'}</td>

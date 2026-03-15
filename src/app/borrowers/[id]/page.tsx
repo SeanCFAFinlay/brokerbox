@@ -1,4 +1,4 @@
-import prisma from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import s from '@/styles/shared.module.css';
 import { notFound } from 'next/navigation';
@@ -11,23 +11,25 @@ export const dynamic = 'force-dynamic';
 
 export default async function BorrowerDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
-    const borrower = await prisma.borrower.findUnique({
-        where: { id },
-        include: {
-            deals: { include: { lender: true }, orderBy: { updatedAt: 'desc' } },
-            scenarios: { orderBy: { createdAt: 'desc' } },
-            docRequests: { include: { files: true }, orderBy: { createdAt: 'desc' } },
-        },
-    });
+    const { data: borrower, error } = await supabase
+        .from('Borrower')
+        .select('*, deals:Deal(*, lender:Lender(*)), scenarios:Scenario(*), docRequests:DocRequest(*, files:DocumentFile(*))')
+        .eq('id', id)
+        .single();
 
-    if (!borrower) return notFound();
+    if (error || !borrower) return notFound();
+
+    // Manual sort as nested selects don't guarantee order in Supabase SDK directly without extra params
+    if (borrower.deals) borrower.deals.sort((a: any, b: any) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    if (borrower.scenarios) borrower.scenarios.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    if (borrower.docRequests) borrower.docRequests.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     const freshness = leadFreshness(
         { id: borrower.id, updatedAt: borrower.updatedAt },
         borrower.deals[0]?.updatedAt
     );
     const docStats = documentCompleteness(
-        borrower.docRequests.map((d) => ({
+        borrower.docRequests.map((d: any) => ({
             id: d.id,
             status: d.status,
             createdAt: d.createdAt,
@@ -36,9 +38,9 @@ export default async function BorrowerDetailPage({ params }: { params: Promise<{
     );
     const nbaForBorrower = getNextBestActions(
         [{ id: borrower.id, updatedAt: borrower.updatedAt }],
-        borrower.deals.map((d) => ({ id: d.id, borrowerId: d.borrowerId, stage: d.stage, updatedAt: d.updatedAt })),
+        borrower.deals.map((d: any) => ({ id: d.id, borrowerId: d.borrowerId, stage: d.stage, updatedAt: d.updatedAt })),
         [],
-        borrower.docRequests.map((d) => ({ id: d.id, borrowerId: d.borrowerId, dealId: d.dealId, status: d.status, createdAt: d.createdAt }))
+        borrower.docRequests.map((d: any) => ({ id: d.id, borrowerId: d.borrowerId, dealId: d.dealId, status: d.status, createdAt: d.createdAt }))
     ).filter((a) => a.entityId === id).slice(0, 3);
 
     return (
@@ -61,11 +63,13 @@ export default async function BorrowerDetailPage({ params }: { params: Promise<{
             {/* Profile summary */}
             <div className={s.kpiRow} style={{ marginBottom: 24 }}>
                 <div className={s.kpiCard}><div className={s.kpiLabel}>Credit Score</div><div className={s.kpiValue}>{borrower.creditScore}</div></div>
-                <div className={s.kpiCard}><div className={s.kpiLabel}>Annual Income</div><div className={s.kpiValue}>${borrower.income.toLocaleString()}</div></div>
-                <div className={s.kpiCard}><div className={s.kpiLabel}>Province</div><div className={s.kpiValue}>{borrower.province}</div></div>
-                <div className={s.kpiCard}><div className={s.kpiLabel}>Employment</div><div className={s.kpiValue} style={{ fontSize: 18 }}>{borrower.employmentStatus}</div></div>
-                <div className={s.kpiCard}><div className={s.kpiLabel}>Active Deals</div><div className={s.kpiValue}>{borrower.deals.length}</div></div>
-                <div className={s.kpiCard}><div className={s.kpiLabel}>Docs Complete</div><div className={s.kpiValue}>{docStats.pctComplete}%</div><div className={s.kpiSub}>{docStats.verified}/{docStats.requested || 1} verified</div></div>
+                <div className={s.kpiRow} style={{ flex: 1 }}>
+                    <div className={s.kpiCard}><div className={s.kpiLabel}>Annual Income</div><div className={s.kpiValue}>${borrower.income?.toLocaleString()}</div></div>
+                    <div className={s.kpiCard}><div className={s.kpiLabel}>Province</div><div className={s.kpiValue}>{borrower.province}</div></div>
+                    <div className={s.kpiCard}><div className={s.kpiLabel}>Employment</div><div className={s.kpiValue} style={{ fontSize: 18 }}>{borrower.employmentStatus}</div></div>
+                    <div className={s.kpiCard}><div className={s.kpiLabel}>Active Deals</div><div className={s.kpiValue}>{borrower.deals.length}</div></div>
+                    <div className={s.kpiCard}><div className={s.kpiLabel}>Docs Complete</div><div className={s.kpiValue}>{docStats.pctComplete}%</div><div className={s.kpiSub}>{docStats.verified}/{docStats.requested || 1} verified</div></div>
+                </div>
             </div>
 
             {nbaForBorrower.length > 0 && (
@@ -112,7 +116,7 @@ export default async function BorrowerDetailPage({ params }: { params: Promise<{
                         <div className={s.emptyState}>No document requests yet.</div>
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            {borrower.docRequests.map(dr => {
+                            {borrower.docRequests.map((dr: any) => {
                                 const statusColor = dr.status === 'verified' ? s.pillGreen : dr.status === 'uploaded' ? s.pillBlue : dr.status === 'rejected' ? s.pillRed : s.pillYellow;
                                 return (
                                     <div key={dr.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, paddingBottom: 8, borderBottom: '1px solid var(--bb-border)' }}>
@@ -146,7 +150,7 @@ export default async function BorrowerDetailPage({ params }: { params: Promise<{
                     <table className={s.table}>
                         <thead><tr><th>Property</th><th>Loan</th><th>LTV</th><th>Stage</th><th>Lender</th></tr></thead>
                         <tbody>
-                            {borrower.deals.map(d => (
+                            {borrower.deals.map((d: any) => (
                                 <tr key={d.id}>
                                     <td><Link href={`/deals/${d.id}`} style={{ color: 'var(--bb-accent)', fontWeight: 600 }}>{d.propertyAddress || '—'}</Link></td>
                                     <td>${d.loanAmount.toLocaleString()}</td>
@@ -178,7 +182,7 @@ export default async function BorrowerDetailPage({ params }: { params: Promise<{
                     <table className={s.table}>
                         <thead><tr><th>Name</th><th>Type</th><th>Loan</th><th>Payment</th><th>Created</th></tr></thead>
                         <tbody>
-                            {borrower.scenarios.map(sc => {
+                            {borrower.scenarios.map((sc: any) => {
                                 const r = sc.results as Record<string, number>;
                                 return (
                                     <tr key={sc.id}>

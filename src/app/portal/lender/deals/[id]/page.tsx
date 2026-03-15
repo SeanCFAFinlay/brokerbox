@@ -1,4 +1,4 @@
-import prisma from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import s from '@/styles/shared.module.css';
 import { notFound } from 'next/navigation';
@@ -9,24 +9,36 @@ export const dynamic = 'force-dynamic';
 export default async function LenderDealReviewPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
 
-    // Auth validation mock
-    const lender = await prisma.lender.findFirst({ where: { status: 'active' } });
+    // Auth validation mock: pick the first active lender
+    const { data: lender } = await supabase
+        .from('Lender')
+        .select('*')
+        .eq('status', 'active')
+        .limit(1)
+        .single();
+        
     if (!lender) return <div>No Lender Found</div>;
 
-    const deal = await prisma.deal.findUnique({
-        where: { id },
-        include: {
-            borrower: true,
-            docRequests: { include: { files: true }, orderBy: { createdAt: 'desc' } }
-        }
-    });
+    const { data: deal, error: dealError } = await supabase
+        .from('Deal')
+        .select(`
+            *,
+            borrower:Borrower(*),
+            docRequests:DocRequest(*, files:DocumentFile(*))
+        `)
+        .eq('id', id)
+        .single();
 
-    const conditions = await prisma.dealCondition.findMany({
-        where: { dealId: id },
-        orderBy: { createdAt: 'desc' }
-    });
+    if (dealError || !deal) return notFound();
 
-    if (!deal) return notFound();
+    const { data: conditions } = await supabase
+        .from('DealCondition')
+        .select('*')
+        .eq('dealId', id)
+        .order('createdAt', { ascending: false });
+
+    // Manual sort for nested docRequests
+    if (deal.docRequests) (deal.docRequests as any[]).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     return (
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 20px' }}>
@@ -40,7 +52,7 @@ export default async function LenderDealReviewPage({ params }: { params: Promise
                         <h1>Review Submission</h1>
                     </div>
                     <span className={`${s.pill} ${deal.stage === 'funded' ? s.pillGreen : deal.stage === 'committed' ? s.pillBlue : s.pillYellow}`}>
-                        {deal.stage.replace('_', ' ').toUpperCase()}
+                        {deal.stage?.replace('_', ' ').toUpperCase()}
                     </span>
                 </div>
             </div>
@@ -51,15 +63,15 @@ export default async function LenderDealReviewPage({ params }: { params: Promise
                     <div className={s.card}>
                         <div className={s.cardTitle}>Application Details</div>
                         <div className={s.kpiRow} style={{ marginBottom: 16 }}>
-                            <div className={s.kpiCard} style={{ padding: 12 }}><div className={s.kpiLabel}>Loan Requested</div><div className={s.kpiValue} style={{ fontSize: 20 }}>${deal.loanAmount.toLocaleString()}</div></div>
-                            <div className={s.kpiCard} style={{ padding: 12 }}><div className={s.kpiLabel}>Property Value</div><div className={s.kpiValue} style={{ fontSize: 20 }}>${deal.propertyValue.toLocaleString()}</div></div>
+                            <div className={s.kpiCard} style={{ padding: 12 }}><div className={s.kpiLabel}>Loan Requested</div><div className={s.kpiValue} style={{ fontSize: 20 }}>${deal.loanAmount?.toLocaleString()}</div></div>
+                            <div className={s.kpiCard} style={{ padding: 12 }}><div className={s.kpiLabel}>Property Value</div><div className={s.kpiValue} style={{ fontSize: 20 }}>${deal.propertyValue?.toLocaleString()}</div></div>
                             <div className={s.kpiCard} style={{ padding: 12 }}><div className={s.kpiLabel}>LTV</div><div className={s.kpiValue} style={{ fontSize: 20 }}>{deal.ltv ? `${deal.ltv.toFixed(1)}%` : '—'}</div></div>
                         </div>
                         <table className={s.table}>
                             <tbody>
                                 <tr><td style={{ fontWeight: 600, width: 140 }}>Position</td><td>{deal.position}</td></tr>
                                 <tr><td style={{ fontWeight: 600 }}>Property Type</td><td style={{ textTransform: 'capitalize' }}>{deal.propertyType}</td></tr>
-                                <tr><td style={{ fontWeight: 600 }}>Loan Purpose</td><td style={{ textTransform: 'capitalize' }}>{deal.loanPurpose.replace('_', ' ')}</td></tr>
+                                <tr><td style={{ fontWeight: 600 }}>Loan Purpose</td><td style={{ textTransform: 'capitalize' }}>{deal.loanPurpose?.replace('_', ' ')}</td></tr>
                                 {deal.interestRate && <tr><td style={{ fontWeight: 600 }}>Suggested Rate</td><td>{deal.interestRate.toFixed(2)}%</td></tr>}
                             </tbody>
                         </table>
@@ -70,10 +82,10 @@ export default async function LenderDealReviewPage({ params }: { params: Promise
                         <div className={s.cardTitle}>Applicant Profile</div>
                         <table className={s.table}>
                             <tbody>
-                                <tr><td style={{ fontWeight: 600, width: 140 }}>Name</td><td>{deal.borrower.firstName} {deal.borrower.lastName}</td></tr>
-                                <tr><td style={{ fontWeight: 600 }}>Credit Score</td><td><span className={`${s.pill} ${deal.borrower.creditScore >= 680 ? s.pillGreen : deal.borrower.creditScore >= 600 ? s.pillYellow : s.pillRed}`}>{deal.borrower.creditScore}</span></td></tr>
-                                <tr><td style={{ fontWeight: 600 }}>Annual Income</td><td>${deal.borrower.income.toLocaleString()} ({deal.borrower.employmentStatus})</td></tr>
-                                <tr><td style={{ fontWeight: 600 }}>Liabilities</td><td>${deal.borrower.liabilities.toLocaleString()}</td></tr>
+                                <tr><td style={{ fontWeight: 600, width: 140 }}>Name</td><td>{deal.borrower?.firstName} {deal.borrower?.lastName}</td></tr>
+                                <tr><td style={{ fontWeight: 600 }}>Credit Score</td><td><span className={`${s.pill} ${deal.borrower?.creditScore >= 680 ? s.pillGreen : deal.borrower?.creditScore >= 600 ? s.pillYellow : s.pillRed}`}>{deal.borrower?.creditScore}</span></td></tr>
+                                <tr><td style={{ fontWeight: 600 }}>Annual Income</td><td>${deal.borrower?.income?.toLocaleString()} ({deal.borrower?.employmentStatus})</td></tr>
+                                <tr><td style={{ fontWeight: 600 }}>Liabilities</td><td>${deal.borrower?.liabilities?.toLocaleString()}</td></tr>
                                 <tr><td style={{ fontWeight: 600 }}>GDS / TDS</td><td>{deal.gds ? `${deal.gds.toFixed(1)}%` : '—'} / {deal.tds ? `${deal.tds.toFixed(1)}%` : '—'}</td></tr>
                             </tbody>
                         </table>
@@ -87,16 +99,16 @@ export default async function LenderDealReviewPage({ params }: { params: Promise
                     {/* Documents */}
                     <div className={s.card}>
                         <div className={s.cardTitle}>Supporting Documents</div>
-                        {deal.docRequests.length === 0 ? (
+                        {(deal.docRequests as any[] || []).length === 0 ? (
                             <div className={s.emptyState}>No documents provided by broker yet.</div>
                         ) : (
                             <table className={s.table}>
                                 <tbody>
-                                    {deal.docRequests.map(dr => (
+                                    {(deal.docRequests as any[] || []).map(dr => (
                                         <tr key={dr.id}>
                                             <td style={{ fontWeight: 600 }}>{dr.docType}</td>
                                             <td><span className={`${s.pill} ${dr.status === 'verified' ? s.pillGreen : s.pillYellow}`}>{dr.status}</span></td>
-                                            <td style={{ fontSize: 13, color: 'var(--bb-accent)' }}>{dr.files.length} File(s)</td>
+                                            <td style={{ fontSize: 13, color: 'var(--bb-accent)' }}>{dr.files?.length || 0} File(s)</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -107,17 +119,17 @@ export default async function LenderDealReviewPage({ params }: { params: Promise
                     {/* Conditions */}
                     <div className={s.card}>
                         <div className={s.cardTitle}>Stipulations & Conditions</div>
-                        {conditions.length === 0 ? (
+                        {(conditions as any[] || []).length === 0 ? (
                             <div className={s.emptyState}>No conditions requested yet.</div>
                         ) : (
                             <table className={s.table}>
                                 <tbody>
-                                    {conditions.map(c => (
+                                    {(conditions as any[] || []).map(c => (
                                         <tr key={c.id}>
                                             <td>{c.description}</td>
                                             <td style={{ textAlign: 'right' }}>
                                                 <span className={`${s.pill} ${c.status === 'met' || c.status === 'waived' ? s.pillGreen : s.pillYellow}`}>
-                                                    {c.status.toUpperCase()}
+                                                    {c.status?.toUpperCase()}
                                                 </span>
                                             </td>
                                         </tr>

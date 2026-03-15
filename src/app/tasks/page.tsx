@@ -1,25 +1,27 @@
-import prisma from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import s from '@/styles/shared.module.css';
 
 export const dynamic = 'force-dynamic';
 
 export default async function TasksPage() {
-    const tasks = await prisma.task.findMany({
-        orderBy: { dueDate: 'asc' },
-        include: { Deal: { include: { borrower: true } } }
-    });
+    const { data: tasksData } = await supabase
+        .from('Task')
+        .select('*, Deal(*, borrower:Borrower(*))')
+        .order('dueDate', { ascending: true });
 
-    const pending = tasks.filter(t => t.status === 'pending');
-    const completed = tasks.filter(t => t.status === 'completed');
-    const overdue = pending.filter(t => t.dueDate && new Date(t.dueDate) < new Date());
-    const dueSoon = pending.filter(t => t.dueDate && new Date(t.dueDate) >= new Date());
+    const tasks = tasksData || [];
+
+    const pending = tasks.filter((t: any) => t.status === 'pending');
+    const completed = tasks.filter((t: any) => t.status === 'completed');
+    const overdue = pending.filter((t: any) => t.dueDate && new Date(t.dueDate) < new Date());
+    const dueSoon = pending.filter((t: any) => t.dueDate && new Date(t.dueDate) >= new Date());
 
     // Sort for display: overdue first, then due soon by date, then no due date, then completed
     const sortedTasks = [
-        ...overdue.sort((a, b) => (a.dueDate && b.dueDate ? new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime() : 0)),
-        ...dueSoon.sort((a, b) => (a.dueDate && b.dueDate ? new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime() : 0)),
-        ...pending.filter(t => !t.dueDate),
+        ...overdue.sort((a: any, b: any) => (a.dueDate && b.dueDate ? new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime() : 0)),
+        ...dueSoon.sort((a: any, b: any) => (a.dueDate && b.dueDate ? new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime() : 0)),
+        ...pending.filter((t: any) => !t.dueDate),
         ...completed
     ];
 
@@ -51,10 +53,10 @@ export default async function TasksPage() {
                 <div className={s.card} style={{ marginBottom: 24, borderLeft: '4px solid var(--bb-danger)' }}>
                     <div className={s.cardTitle} style={{ marginBottom: 8 }}>Overdue — act now</div>
                     <ul style={{ margin: 0, paddingLeft: 20, fontSize: 14, color: 'var(--bb-text-secondary)' }}>
-                        {overdue.slice(0, 8).map(t => (
+                        {overdue.slice(0, 8).map((t: any) => (
                             <li key={t.id}>
                                 <Link href={t.dealId ? `/deals/${t.dealId}` : '#'} style={{ color: 'var(--bb-accent)', fontWeight: 600 }}>{t.title}</Link>
-                                {t.Deal && <span style={{ marginLeft: 8 }}>— {t.Deal.propertyAddress || `Deal #${t.Deal.id.slice(-6)}`} ({t.Deal.borrower.firstName} {t.Deal.borrower.lastName})</span>}
+                                {t.Deal && <span style={{ marginLeft: 8 }}>— {t.Deal.propertyAddress || `Deal #${t.Deal.id.slice(-6)}`} ({t.Deal.borrower?.firstName} {t.Deal.borrower?.lastName})</span>}
                                 {t.dueDate && <span style={{ marginLeft: 8, color: 'var(--bb-danger)' }}>Due {new Date(t.dueDate).toLocaleDateString()}</span>}
                             </li>
                         ))}
@@ -79,7 +81,7 @@ export default async function TasksPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {sortedTasks.map(t => {
+                            {sortedTasks.map((t: any) => {
                                 const isOverdue = t.status === 'pending' && t.dueDate && new Date(t.dueDate) < new Date();
                                 return (
                                     <tr key={t.id} style={{ opacity: t.status === 'completed' ? 0.6 : 1, backgroundColor: isOverdue ? 'rgba(220, 53, 69, 0.06)' : undefined }}>
@@ -94,7 +96,7 @@ export default async function TasksPage() {
                                                 <Link href={`/deals/${t.Deal.id}`} style={{ color: 'var(--bb-accent)', textDecoration: 'none' }}>
                                                     {t.Deal.propertyAddress || `Deal #${t.Deal.id.slice(-6)}`}
                                                     <span style={{ fontSize: 11, color: 'var(--bb-muted)', marginLeft: 8 }}>
-                                                        ({t.Deal.borrower.firstName} {t.Deal.borrower.lastName})
+                                                        ({t.Deal.borrower?.firstName} {t.Deal.borrower?.lastName})
                                                     </span>
                                                 </Link>
                                             ) : 'General'}

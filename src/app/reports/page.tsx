@@ -1,4 +1,4 @@
-import prisma from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 import s from '@/styles/shared.module.css';
 import Link from 'next/link';
 import { pipelineVolume, fundedVolume, closeRate, avgDaysToFund } from '@/lib/domain';
@@ -6,13 +6,21 @@ import { pipelineVolume, fundedVolume, closeRate, avgDaysToFund } from '@/lib/do
 export const dynamic = 'force-dynamic';
 
 export default async function ReportsPage() {
-    const [deals, lenders, borrowers] = await Promise.all([
-        prisma.deal.findMany({ include: { borrower: true, lender: true } }),
-        prisma.lender.findMany(),
-        prisma.borrower.findMany()
+    const [
+        { data: dealsData },
+        { data: lendersData },
+        { data: borrowersData }
+    ] = await Promise.all([
+        supabase.from('Deal').select('*, borrower:Borrower(*), lender:Lender(*)'),
+        supabase.from('Lender').select('*'),
+        supabase.from('Borrower').select('*')
     ]);
 
-    const dealDtos = deals.map(d => ({
+    const deals = dealsData || [];
+    const lenders = lendersData || [];
+    const borrowers = borrowersData || [];
+
+    const dealDtos = deals.map((d: any) => ({
         id: d.id,
         stage: d.stage,
         loanAmount: d.loanAmount,
@@ -26,8 +34,8 @@ export default async function ReportsPage() {
     const totalFundedVol = fundedVolume(dealDtos);
     const closeRatePct = closeRate(dealDtos);
     const avgDays = avgDaysToFund(dealDtos);
-    const funded = deals.filter(d => d.stage === 'funded');
-    const active = deals.filter(d => ['intake', 'in_review', 'matched', 'committed'].includes(d.stage));
+    const funded = deals.filter((d: any) => d.stage === 'funded');
+    const active = deals.filter((d: any) => ['intake', 'in_review', 'matched', 'committed'].includes(d.stage));
 
     // Volume by month (last 6 months)
     const months = Array.from({ length: 6 }, (_, i) => {
@@ -41,13 +49,13 @@ export default async function ReportsPage() {
     }).reverse();
 
     const monthlyVolume = months.map(m => {
-        const monthDeals = funded.filter(d => {
+        const monthDeals = funded.filter((d: any) => {
             const fd = new Date(d.fundingDate || d.updatedAt);
             return fd.getFullYear() === m.year && fd.getMonth() === m.month;
         });
         return {
             label: m.label,
-            volume: monthDeals.reduce((sum, d) => sum + d.loanAmount, 0),
+            volume: monthDeals.reduce((sum: number, d: any) => sum + (d.loanAmount || 0), 0),
             count: monthDeals.length
         };
     });
@@ -62,21 +70,21 @@ export default async function ReportsPage() {
     ];
 
     const ltvDist = ltvTiers.map(tier => {
-        const tierDeals = deals.filter(d => d.ltv && d.ltv > tier.min && d.ltv <= tier.max);
-        return { ...tier, count: tierDeals.length, volume: tierDeals.reduce((sum, d) => sum + d.loanAmount, 0) };
+        const tierDeals = deals.filter((d: any) => d.ltv && d.ltv > tier.min && d.ltv <= tier.max);
+        return { ...tier, count: tierDeals.length, volume: tierDeals.reduce((sum: number, d: any) => sum + (d.loanAmount || 0), 0) };
     });
 
     // Lender Performance
-    const lenderStats = lenders.map(l => {
-        const lDeals = funded.filter(d => d.lenderId === l.id);
-        const lPipeline = active.filter(d => d.lenderId === l.id);
+    const lenderStats = lenders.map((l: any) => {
+        const lDeals = funded.filter((d: any) => d.lenderId === l.id);
+        const lPipeline = active.filter((d: any) => d.lenderId === l.id);
         return {
             name: l.name,
             fundedCount: lDeals.length,
-            fundedVolume: lDeals.reduce((sum, d) => sum + d.loanAmount, 0),
-            pipelineVolume: lPipeline.reduce((sum, d) => sum + d.loanAmount, 0)
+            fundedVolume: lDeals.reduce((sum: number, d: any) => sum + (d.loanAmount || 0), 0),
+            pipelineVolume: lPipeline.reduce((sum: number, d: any) => sum + (d.loanAmount || 0), 0)
         };
-    }).sort((a, b) => b.fundedVolume - a.fundedVolume);
+    }).sort((a: any, b: any) => b.fundedVolume - a.fundedVolume);
 
     return (
         <div style={{ padding: '40px' }}>
@@ -144,7 +152,7 @@ export default async function ReportsPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {lenderStats.slice(0, 5).map(ls => (
+                            {lenderStats.slice(0, 5).map((ls: any) => (
                                 <tr key={ls.name}>
                                     <td style={{ fontWeight: 600 }}>{ls.name}</td>
                                     <td>${(ls.fundedVolume / 1e6).toFixed(1)}M <div style={{ fontSize: 11, color: 'var(--bb-muted)' }}>{ls.fundedCount} deals</div></td>
@@ -160,10 +168,10 @@ export default async function ReportsPage() {
                 <div className={s.cardTitle}>Pipeline Aging Analysis</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
                     {[
-                        { label: '0-7 Days', days: 7, count: active.filter(d => (new Date().getTime() - new Date(d.createdAt).getTime()) / 86400000 <= 7).length },
-                        { label: '8-14 Days', days: 14, count: active.filter(d => { const age = (new Date().getTime() - new Date(d.createdAt).getTime()) / 86400000; return age > 7 && age <= 14; }).length },
-                        { label: '15-30 Days', days: 30, count: active.filter(d => { const age = (new Date().getTime() - new Date(d.createdAt).getTime()) / 86400000; return age > 14 && age <= 30; }).length },
-                        { label: '30+ Days', days: 31, count: active.filter(d => (new Date().getTime() - new Date(d.createdAt).getTime()) / 86400000 > 30).length },
+                        { label: '0-7 Days', days: 7, count: active.filter((d: any) => (new Date().getTime() - new Date(d.createdAt).getTime()) / 86400000 <= 7).length },
+                        { label: '8-14 Days', days: 14, count: active.filter((d: any) => { const age = (new Date().getTime() - new Date(d.createdAt).getTime()) / 86400000; return age > 7 && age <= 14; }).length },
+                        { label: '15-30 Days', days: 30, count: active.filter((d: any) => { const age = (new Date().getTime() - new Date(d.createdAt).getTime()) / 86400000; return age > 14 && age <= 30; }).length },
+                        { label: '30+ Days', days: 31, count: active.filter((d: any) => (new Date().getTime() - new Date(d.createdAt).getTime()) / 86400000 > 30).length },
                     ].map(tier => (
                         <div key={tier.label} style={{ padding: 16, border: '1px solid var(--bb-border)', borderRadius: 8, textAlign: 'center' }}>
                             <div style={{ fontSize: 24, fontWeight: 700, color: tier.days > 15 ? 'var(--bb-danger)' : 'var(--bb-success)' }}>{tier.count}</div>

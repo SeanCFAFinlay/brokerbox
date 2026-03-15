@@ -1,20 +1,26 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase';
+import { logAudit } from '@/lib/audit';
+import { writeFile, mkdir } from 'fs/promises';
+import { join } from 'path';
+
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
-import { logAudit } from '@/lib/audit';
-
 export async function GET() {
-    const docs = await prisma.docRequest.findMany({
-        orderBy: { createdAt: 'desc' },
-        include: { files: true, deal: true },
-    });
-    return NextResponse.json(docs);
-}
+    try {
+        const { data: docs, error } = await supabase
+            .from('DocRequest')
+            .select('*, files:DocumentFile(*), deal:Deal(*)')
+            .order('createdAt', { ascending: false });
 
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
+        if (error) throw error;
+        return NextResponse.json(docs ?? []);
+    } catch (err) {
+        console.error(err);
+        return NextResponse.json({ error: 'Failed to fetch documents' }, { status: 500 });
+    }
+}
 
 export async function POST(req: NextRequest) {
     try {
@@ -42,30 +48,47 @@ export async function POST(req: NextRequest) {
 
         // 3. Create records in DB
         // First find if a request exists, or create a new one
-        let docRequest = await prisma.docRequest.findFirst({
-            where: { borrowerId, docType, status: 'requested' }
-        });
+        const { data: existingRequest } = await supabase
+            .from('DocRequest')
+            .select('*')
+            .eq('borrowerId', borrowerId)
+            .eq('docType', docType)
+            .eq('status', 'requested')
+            .maybeSingle();
 
-        if (!docRequest) {
-            docRequest = await prisma.docRequest.create({
-                data: { borrowerId, dealId, docType, category, status: 'uploaded' }
-            });
+        let docRequest;
+        if (!existingRequest) {
+            const { data: newRequest, error: createError } = await supabase
+                .from('DocRequest')
+                .insert({ borrowerId, dealId, docType, category, status: 'uploaded' })
+                .select()
+                .single();
+            if (createError) throw createError;
+            docRequest = newRequest;
         } else {
-            await prisma.docRequest.update({
-                where: { id: docRequest.id },
-                data: { status: 'uploaded' }
-            });
+            const { data: updatedRequest, error: updateError } = await supabase
+                .from('DocRequest')
+                .update({ status: 'uploaded' })
+                .eq('id', existingRequest.id)
+                .select()
+                .single();
+            if (updateError) throw updateError;
+            docRequest = updatedRequest;
         }
 
-        const docFile = await prisma.documentFile.create({
-            data: {
+        const { data: docFile, error: fileError } = await supabase
+            .from('DocumentFile')
+            .insert({
                 docRequestId: docRequest.id,
                 filename,
                 path: `/uploads/${borrowerId}/${filename}`,
                 mimeType: file.type,
                 fileSize: file.size
-            }
-        });
+            })
+            .select()
+            .single();
+
+        if (fileError) throw fileError;
 
         await logAudit('DocumentFile', docFile.id, 'CREATE', { filename: { old: null, new: filename } });
 

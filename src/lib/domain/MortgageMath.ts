@@ -13,11 +13,17 @@ export interface GdsTdsInput {
     grossIncome: number;
 }
 
+/**
+ * @deprecated Legacy Mortgage logic. Use Asset-Based Lending (LTV) where possible.
+ */
 export function calculateGDS(input: GdsTdsInput): number {
     const housingCosts = input.principal + input.interest + input.taxes + input.heat + (input.condoFees || 0) * 0.5;
     return (housingCosts / (input.grossIncome / 12)) * 100;
 }
 
+/**
+ * @deprecated Legacy Mortgage logic. Use Asset-Based Lending (LTV) where possible.
+ */
 export function calculateTDS(input: GdsTdsInput): number {
     const totalDebt = input.principal + input.interest + input.taxes + input.heat + (input.condoFees || 0) * 0.5 + (input.otherDebt || 0);
     return (totalDebt / (input.grossIncome / 12)) * 100;

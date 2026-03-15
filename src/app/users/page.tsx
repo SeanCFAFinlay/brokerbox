@@ -1,14 +1,15 @@
-import prisma from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 import UsersClient from './UsersClient';
 
 export const dynamic = 'force-dynamic';
 
 export default async function UsersPage() {
-    const users = await prisma.user.findMany({
-        orderBy: { createdAt: 'desc' },
-    });
+    const { data: users } = await supabase
+        .from('User')
+        .select('*')
+        .order('createdAt', { ascending: false });
 
     return (
-        <UsersClient users={users as any} />
+        <UsersClient users={(users || []) as any} />
     );
 }

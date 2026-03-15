@@ -27,7 +27,15 @@ export default function TaskList({ entityType, entityId }: { entityType?: string
             url += `?entityType=${entityType}&entityId=${entityId}`;
         }
         fetch(url).then(r => r.json()).then(data => {
-            setTasks(data);
+            if (Array.isArray(data)) {
+                setTasks(data);
+            } else {
+                console.error('Expected array from /api/tasks, got:', data);
+                setTasks([]);
+            }
+            setLoading(false);
+        }).catch(err => {
+            console.error('Failed to fetch tasks:', err);
             setLoading(false);
         });
     }, [entityType, entityId]);

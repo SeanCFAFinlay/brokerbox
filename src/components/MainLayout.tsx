@@ -1,5 +1,4 @@
-'use client';
-
+import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import { useSidebar } from '@/components/SidebarContext';
@@ -7,6 +6,13 @@ import s from '@/styles/MainLayout.module.css';
 
 export default function MainLayout({ children, userId = "demo" }: { children: React.ReactNode, userId?: string }) {
     const { toggle } = useSidebar();
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) return null;
 
     return (
         <div style={{ display: 'flex', minHeight: '100vh', position: 'relative' }}>

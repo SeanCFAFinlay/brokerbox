@@ -1,23 +1,23 @@
-import prisma from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 import s from '@/styles/shared.module.css';
 import CapitalPoolClient from './CapitalPoolClient';
 
 export const dynamic = 'force-dynamic';
 
 export default async function CapitalPage() {
-    const pools = await prisma.capitalPool.findMany({
-        include: {
-            lender: true,
-            investments: { include: { user: true } }
-        },
-        orderBy: { createdAt: 'desc' }
-    });
+    const { data: poolsData } = await supabase
+        .from('CapitalPool')
+        .select('*, lender:Lender(*), investments:Investment(*, user:User(*))')
+        .order('createdAt', { ascending: false });
 
-    const activeLenders = await prisma.lender.findMany({ where: { status: 'active' } });
-    const investors = await prisma.user.findMany({ where: { role: 'investor' } });
+    const pools = poolsData || [];
+    const { data: activeLendersData } = await supabase.from('Lender').select('*').eq('status', 'active');
+    const activeLenders = activeLendersData || [];
+    const { data: investorsData } = await supabase.from('User').select('*').eq('role', 'investor');
+    const investors = investorsData || [];
 
-    const totalCapital = pools.reduce((sum, p) => sum + p.totalAmount, 0);
-    const activeCapital = pools.reduce((sum, p) => sum + p.availableAmount, 0);
+    const totalCapital = pools.reduce((sum, p) => sum + (p.totalAmount || 0), 0);
+    const activeCapital = pools.reduce((sum, p) => sum + (p.availableAmount || 0), 0);
     const deployedCapital = totalCapital - activeCapital;
     const utilization = totalCapital > 0 ? (deployedCapital / totalCapital) * 100 : 0;
 
@@ -50,7 +50,7 @@ export default async function CapitalPage() {
             </div>
 
             {/* Client Component handles Modals/Forms and state mapping */}
-            <CapitalPoolClient initialPools={pools} lenders={activeLenders} investors={investors} />
+            <CapitalPoolClient initialPools={pools as any} lenders={activeLenders as any} investors={investors as any} />
         </div>
     );
 }

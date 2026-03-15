@@ -1,18 +1,40 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase';
+import { logAudit } from '@/lib/audit';
+
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
-import { logAudit } from '@/lib/audit';
-
 export async function GET() {
-    const lenders = await prisma.lender.findMany({ orderBy: { name: 'asc' } });
-    return NextResponse.json(lenders);
+    try {
+        const { data: lenders, error } = await supabase
+            .from('Lender')
+            .select('*')
+            .order('name', { ascending: true });
+
+        if (error) throw error;
+        return NextResponse.json(lenders ?? []);
+    } catch (err) {
+        console.error(err);
+        return NextResponse.json({ error: 'Failed to fetch lenders' }, { status: 500 });
+    }
 }
 
 export async function POST(req: NextRequest) {
-    const body = await req.json();
-    const lender = await prisma.lender.create({ data: body });
-    await logAudit('Lender', lender.id, 'CREATE');
-    return NextResponse.json(lender, { status: 201 });
+    try {
+        const body = await req.json();
+        const { data: lender, error } = await supabase
+            .from('Lender')
+            .insert(body)
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        await logAudit('Lender', lender.id, 'CREATE');
+        return NextResponse.json(lender, { status: 201 });
+    } catch (err) {
+        console.error(err);
+        return NextResponse.json({ error: 'Failed to create lender' }, { status: 500 });
+    }
 }

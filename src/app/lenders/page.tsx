@@ -1,4 +1,4 @@
-import prisma from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 import s from '@/styles/shared.module.css';
 import LenderActions from './LenderActions';
 import LenderTable from './LenderTable';
@@ -6,12 +6,17 @@ import LenderTable from './LenderTable';
 export const dynamic = 'force-dynamic';
 
 export default async function LendersPage() {
-    const lenders = await prisma.lender.findMany({
-        orderBy: { name: 'asc' },
-        include: { _count: { select: { deals: true } } },
-    });
+    const { data: lendersData } = await supabase
+        .from('Lender')
+        .select('*, deals:Deal(count)')
+        .order('name', { ascending: true });
 
-    const totalCapital = lenders.reduce((sum, l) => sum + l.capitalAvailable, 0);
+    const lenders = (lendersData || []).map(l => ({
+        ...l,
+        _count: { deals: (l.deals as any || [])[0]?.count || 0 }
+    }));
+
+    const totalCapital = lenders.reduce((sum, l) => sum + (l.capitalAvailable || 0), 0);
 
     return (
         <>

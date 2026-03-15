@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 import { logAudit } from '@/lib/audit';
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -7,7 +7,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         const resolvedParams = await params;
         const body = await req.json();
 
-        const oldUser = await prisma.user.findUnique({ where: { id: resolvedParams.id } });
+        const { data: oldUser } = await supabase.from('User').select('*').eq('id', resolvedParams.id).single();
         if (!oldUser) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
@@ -16,10 +16,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         if (body.role !== undefined) dataToUpdate.role = body.role;
         if (body.baseCommissionSplit !== undefined) dataToUpdate.baseCommissionSplit = Number(body.baseCommissionSplit);
 
-        const updatedUser = await prisma.user.update({
-            where: { id: resolvedParams.id },
-            data: dataToUpdate
-        });
+        const { data: updatedUser, error } = await supabase.from('User').update(dataToUpdate).eq('id', resolvedParams.id).select().single();
+        if (error) throw error;
 
         const diff: Record<string, { old: any, new: any }> = {};
         if (body.role !== undefined && body.role !== oldUser.role) diff.role = { old: oldUser.role, new: body.role };

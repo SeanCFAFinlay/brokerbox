@@ -1,6 +1,6 @@
-import prisma from './prisma';
+import { supabase } from './supabase';
 
-const CLIENT_ID = process.env.AZURE_CLIENT_ID;
+const CLIENT_ID = process.env.AZURE_AD_CLIENT_ID;
 const CLIENT_SECRET = process.env.AZURE_CLIENT_SECRET;
 const REDIRECT_URI = process.env.AZURE_REDIRECT_URI || 'http://localhost:3000/api/auth/outlook/callback';
 
@@ -45,21 +45,20 @@ export async function refreshAccessToken(userId: string, refreshToken: string) {
     if (!res.ok) throw new Error('Refresh token exchange failed');
     const tokens = await res.json();
 
-    await prisma.user.update({
-        where: { id: userId },
-        data: {
-            outlookAccessToken: tokens.access_token,
-            outlookRefreshToken: tokens.refresh_token || refreshToken,
-            outlookTokenExpiry: new Date(Date.now() + tokens.expires_in * 1000)
-        }
-    });
+    const { error } = await supabase.from('User').update({
+        outlookAccessToken: tokens.access_token,
+        outlookRefreshToken: tokens.refresh_token || refreshToken,
+        outlookTokenExpiry: new Date(Date.now() + tokens.expires_in * 1000).toISOString()
+    }).eq('id', userId);
+
+    if (error) throw error;
 
     return tokens.access_token;
 }
 
 export async function syncToOutlook(userId: string) {
-    const user = (await prisma.user.findUnique({ where: { id: userId } })) as any;
-    if (!user || !user.outlookRefreshToken) return;
+    const { data: user, error: userError } = await supabase.from('User').select('*').eq('id', userId).single();
+    if (userError || !user || !user.outlookRefreshToken) return;
 
     let token = user.outlookAccessToken;
     if (!token || (user.outlookTokenExpiry && new Date(user.outlookTokenExpiry) < new Date())) {
@@ -68,10 +67,8 @@ export async function syncToOutlook(userId: string) {
     }
 
     // Fetch deals with closing dates
-    const deals = await prisma.deal.findMany({
-        where: { closingDate: { not: null } },
-        include: { borrower: true }
-    });
+    const { data: deals, error: dealsError } = await supabase.from('Deal').select('*, borrower:Borrower(*)').not('closingDate', 'is', null);
+    if (dealsError || !deals) return;
 
     for (const deal of deals) {
         try {
@@ -89,11 +86,11 @@ export async function syncToOutlook(userId: string) {
                         content: `BrokerBox Closing for ${deal.propertyAddress || 'No Address'}.`
                     },
                     start: {
-                        dateTime: deal.closingDate?.toISOString(),
+                        dateTime: deal.closingDate,
                         timeZone: 'UTC'
                     },
                     end: {
-                        dateTime: new Date(deal.closingDate!.getTime() + 3600000).toISOString(),
+                        dateTime: new Date(new Date(deal.closingDate).getTime() + 3600000).toISOString(),
                         timeZone: 'UTC'
                     }
                 })

@@ -1,51 +1,59 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase';
+import { logAudit } from '@/lib/audit';
+
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
-import { logAudit } from '@/lib/audit';
-
 export async function GET() {
-    let settings = await prisma.brokerageSettings.findUnique({ where: { id: 'default' } });
-    if (!settings) {
-        settings = await prisma.brokerageSettings.create({
-            data: { id: 'default', brokerageName: 'BrokerBox Financial Group' }
+    try {
+        const { data: settingsData, error } = await supabase.from('BrokerageSettings').select('*').eq('id', 'default').maybeSingle();
+        let settings = settingsData;
+
+        if (!settings) {
+            const { data: newSettings, error: createError } = await supabase.from('BrokerageSettings').insert({ id: 'default', brokerageName: 'BrokerBox Financial Group' }).select().single();
+            if (createError) throw createError;
+            settings = newSettings;
+        }
+
+        const { data: user } = await supabase.from('User').select('outlookEnabled').eq('email', 'broker@demo.com').maybeSingle();
+
+        return NextResponse.json({
+            ...settings,
+            outlookEnabled: user?.outlookEnabled || false
         });
+    } catch (err) {
+        console.error(err);
+        return NextResponse.json({ error: 'Failed to fetch settings' }, { status: 500 });
     }
-
-    // For demo purposes, merge the 'demo-user-id' outlook status
-    const user = await prisma.user.findFirst({ where: { email: 'broker@demo.com' } });
-
-    return NextResponse.json({
-        ...settings,
-        outlookEnabled: user?.outlookEnabled || false
-    });
 }
 
 export async function PUT(req: NextRequest) {
-    const body = await req.json();
-    const old = await prisma.brokerageSettings.findUnique({ where: { id: 'default' } });
+    try {
+        const body = await req.json();
+        const { data: old } = await supabase.from('BrokerageSettings').select('*').eq('id', 'default').maybeSingle();
 
-    // Convert numerical inputs
-    ['defaultBrokerFee', 'defaultLenderFee', 'defaultTermMonths', 'defaultAmortMonths', 'defaultInterestRate'].forEach(k => {
-        if (body[k] !== undefined) body[k] = Number(body[k]);
-    });
+        // Convert numerical inputs
+        ['defaultBrokerFee', 'defaultLenderFee', 'defaultTermMonths', 'defaultAmortMonths', 'defaultInterestRate'].forEach(k => {
+            if (body[k] !== undefined) body[k] = Number(body[k]);
+        });
 
-    const settings = await prisma.brokerageSettings.upsert({
-        where: { id: 'default' },
-        update: body,
-        create: { id: 'default', ...body }
-    });
+        const { data: settings, error } = await supabase.from('BrokerageSettings').upsert({ id: 'default', ...body }).select().single();
+        if (error) throw error;
 
-    if (old) {
-        const diff: any = {};
-        for (const key of Object.keys(body)) {
-            if ((old as any)[key] !== body[key]) diff[key] = { old: (old as any)[key], new: body[key] };
+        if (old) {
+            const diff: any = {};
+            for (const key of Object.keys(body)) {
+                if ((old as any)[key] !== body[key]) diff[key] = { old: (old as any)[key], new: body[key] };
+            }
+            await logAudit('Settings', 'default', 'UPDATE', diff);
+        } else {
+            await logAudit('Settings', 'default', 'CREATE');
         }
-        await logAudit('Settings', 'default', 'UPDATE', diff);
-    } else {
-        await logAudit('Settings', 'default', 'CREATE');
-    }
 
-    return NextResponse.json(settings);
+        return NextResponse.json(settings);
+    } catch (err) {
+        console.error(err);
+        return NextResponse.json({ error: 'Failed to update settings' }, { status: 500 });
+    }
 }

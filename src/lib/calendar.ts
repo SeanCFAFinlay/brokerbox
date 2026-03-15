@@ -1,4 +1,4 @@
-import prisma from './prisma';
+import { supabase } from './supabase';
 
 export async function syncToCalendar(params: {
     title: string;
@@ -14,35 +14,24 @@ export async function syncToCalendar(params: {
     // Standardize duration to 1 hour if not provided
     const end = endTime || new Date(startTime.getTime() + 60 * 60 * 1000);
 
-    return await prisma.calendarEvent.upsert({
-        where: { id: `cal_${sourceType}_${sourceId}` }, // Deterministic ID for syncing
-        update: {
-            title,
-            description,
-            startTime,
-            endTime: end,
-            eventType,
-            sourceId,
-            sourceType,
-        },
-        create: {
-            id: `cal_${sourceType}_${sourceId}`,
-            title,
-            description,
-            startTime,
-            endTime: end,
-            eventType,
-            sourceId,
-            sourceType,
-        }
-    });
+    const { data, error } = await supabase.from('CalendarEvent').upsert({
+        id: `cal_${sourceType}_${sourceId}`,
+        title,
+        description,
+        startTime: startTime.toISOString(),
+        endTime: end.toISOString(),
+        eventType,
+        sourceId,
+        sourceType,
+    }).select().single();
+
+    if (error) throw error;
+    return data;
 }
 
 export async function removeCalendarEvent(sourceId: string, sourceType: string) {
     try {
-        await prisma.calendarEvent.delete({
-            where: { id: `cal_${sourceType}_${sourceId}` }
-        });
+        await supabase.from('CalendarEvent').delete().eq('id', `cal_${sourceType}_${sourceId}`);
     } catch (e) {
         // Ignore if doesn't exist
     }

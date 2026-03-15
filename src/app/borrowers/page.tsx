@@ -1,4 +1,4 @@
-import prisma from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 import s from '@/styles/shared.module.css';
 import BorrowerActions from './BorrowerActions';
 import BorrowerTable from './BorrowerTable';
@@ -6,10 +6,16 @@ import BorrowerTable from './BorrowerTable';
 export const dynamic = 'force-dynamic';
 
 export default async function BorrowersPage() {
-    const borrowers = await prisma.borrower.findMany({
-        orderBy: { updatedAt: 'desc' },
-        include: { _count: { select: { deals: true } } },
-    });
+    const { data: borrowers, error } = await supabase
+        .from('Borrower')
+        .select('*, deals:Deal(count)')
+        .order('updatedAt', { ascending: false });
+
+    // Map counts to mimic Prisma _count structure if needed, or just pass as is
+    const formattedBorrowers = (borrowers || []).map(b => ({
+        ...b,
+        _count: { deals: (b.deals as any || [])[0]?.count || 0 }
+    }));
 
     return (
         <>
@@ -17,13 +23,13 @@ export default async function BorrowersPage() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                         <h1>Borrowers</h1>
-                        <p>{borrowers.length} borrowers in your CRM</p>
+                        <p>{formattedBorrowers.length} borrowers in your CRM</p>
                     </div>
                     <BorrowerActions />
                 </div>
             </div>
 
-            <BorrowerTable borrowers={borrowers as any} />
+            <BorrowerTable borrowers={formattedBorrowers as any} />
         </>
     );
 }

@@ -1,46 +1,61 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 import { logAudit } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-    const pools = await prisma.capitalPool.findMany({
-        include: {
-            lender: true,
-            investments: { include: { user: true } }
-        },
-        orderBy: { createdAt: 'desc' }
-    });
-    return NextResponse.json(pools);
+    try {
+        const { data: pools, error } = await supabase
+            .from('CapitalPool')
+            .select('*, lender:Lender(*), investments:CapitalInvestment(*, user:User(*))')
+            .order('createdAt', { ascending: false });
+
+        if (error) throw error;
+        return NextResponse.json(pools ?? []);
+    } catch (err) {
+        console.error(err);
+        return NextResponse.json({ error: 'Failed to fetch capital pools' }, { status: 500 });
+    }
 }
 
 export async function POST(req: NextRequest) {
-    const body = await req.json();
+    try {
+        const body = await req.json();
 
-    // Convert to numbers
-    const totalAmount = Number(body.totalAmount);
-    const availableAmount = Number(body.availableAmount) || totalAmount;
+        // Convert to numbers
+        const totalAmount = Number(body.totalAmount);
+        const availableAmount = Number(body.availableAmount) || totalAmount;
+        const lenderId = body.lenderId;
 
-    const pool = await prisma.capitalPool.create({
-        data: {
-            name: body.name,
-            totalAmount,
-            availableAmount,
-            utilizationRate: ((totalAmount - availableAmount) / totalAmount) * 100,
-            effectiveLTV: Number(body.effectiveLTV) || 75,
-            minInvestment: Number(body.minInvestment) || 50000,
-            targetYield: Number(body.targetYield) || 8.0,
-            lenderId: body.lenderId,
-        }
-    });
+        const { data: pool, error } = await supabase
+            .from('CapitalPool')
+            .insert({
+                name: body.name,
+                totalAmount,
+                availableAmount,
+                utilizationRate: ((totalAmount - availableAmount) / totalAmount) * 100,
+                effectiveLTV: Number(body.effectiveLTV) || 75,
+                minInvestment: Number(body.minInvestment) || 50000,
+                targetYield: Number(body.targetYield) || 8.0,
+                lenderId,
+            })
+            .select()
+            .single();
 
-    await logAudit('CapitalPool', pool.id, 'CREATE');
+        if (error) throw error;
 
-    // Also update the lender's capitalAvailable manually to sum up their pools
-    const allPools = await prisma.capitalPool.findMany({ where: { lenderId: body.lenderId } });
-    const newCapital = allPools.reduce((sum, p) => sum + p.availableAmount, 0);
-    await prisma.lender.update({ where: { id: body.lenderId }, data: { capitalAvailable: newCapital } });
+        await logAudit('CapitalPool', pool.id, 'CREATE');
 
-    return NextResponse.json(pool, { status: 201 });
+        // Also update the lender's capitalAvailable manually to sum up their pools
+        const { data: allPools } = await supabase.from('CapitalPool').select('availableAmount').eq('lenderId', lenderId);
+        const newCapital = (allPools || []).reduce((sum, p) => sum + p.availableAmount, 0);
+        
+        await supabase.from('Lender').update({ capitalAvailable: newCapital }).eq('id', lenderId);
+
+        return NextResponse.json(pool, { status: 201 });
+    } catch (err) {
+        console.error(err);
+        return NextResponse.json({ error: 'Failed to create capital pool' }, { status: 500 });
+    }
 }

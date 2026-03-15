@@ -1,12 +1,20 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-    const events = await prisma.calendarEvent.findMany({
-        where: { status: 'active' },
-        orderBy: { startTime: 'asc' }
-    });
-    return NextResponse.json(events);
+    try {
+        const { data: events, error } = await supabase
+            .from('CalendarEvent')
+            .select('*')
+            .eq('status', 'active')
+            .order('startTime', { ascending: true });
+
+        if (error) throw error;
+        return NextResponse.json(events ?? []);
+    } catch (err) {
+        console.error(err);
+        return NextResponse.json({ error: 'Failed to fetch calendar events' }, { status: 500 });
+    }
 }

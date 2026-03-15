@@ -1,4 +1,4 @@
-import prisma from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 import s from '@/styles/shared.module.css';
 import DealActions from './DealActions';
 import { KanbanBoard } from './KanbanBoard';
@@ -13,13 +13,14 @@ export default async function DealsPage({ searchParams }: { searchParams: Promis
     const { view } = await searchParams;
     const currentView = view === 'table' ? 'table' : 'board';
 
-    const deals = await prisma.deal.findMany({
-        orderBy: { updatedAt: 'desc' },
-        include: { borrower: true, lender: true },
-    });
+    const { data: deals, error } = await supabase
+        .from('Deal')
+        .select('*, borrower:Borrower(*), lender:Lender(*)')
+        .order('updatedAt', { ascending: false });
 
-    const activePipeline = deals.filter(d => d.stage !== 'declined' && d.stage !== 'archived');
-    const totalVolume = activePipeline.reduce((sum, d) => sum + d.loanAmount, 0);
+    const dealsList = deals || [];
+    const activePipeline = dealsList.filter(d => d.stage !== 'declined' && d.stage !== 'archived');
+    const totalVolume = activePipeline.reduce((sum, d) => sum + (d.loanAmount || 0), 0);
 
     return (
         <>
@@ -27,7 +28,7 @@ export default async function DealsPage({ searchParams }: { searchParams: Promis
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                         <h1>Deal Pipeline</h1>
-                        <p>{deals.length} deals · ${(totalVolume / 1e6).toFixed(1)}M pipeline</p>
+                        <p>{dealsList.length} deals · ${(totalVolume / 1e6).toFixed(1)}M pipeline</p>
                     </div>
                     <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                         <ViewToggle current={currentView} />
@@ -37,9 +38,9 @@ export default async function DealsPage({ searchParams }: { searchParams: Promis
             </div>
 
             {currentView === 'board' ? (
-                <KanbanBoard initialDeals={deals as any} stages={STAGES} />
+                <KanbanBoard initialDeals={dealsList as any} stages={STAGES} />
             ) : (
-                <DealsTableView deals={deals as any} />
+                <DealsTableView deals={dealsList as any} />
             )}
         </>
     );
